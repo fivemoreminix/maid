@@ -42,11 +42,10 @@ pub fn build(release: bool) {
         }
     }
 
+    // We only support ".c", ".cpp", and ".asm" extensions (besides custom)
     match language.as_str() {
         "c" => compile_c(),
-        "cpp" => return,
-        "cxx" => return,
-        "cc" => return,
+        "cpp" => compile_cpp(),
         _ => return,
     }
 }
@@ -89,6 +88,20 @@ fn unix_to_windows_path(path: String) -> String {
         }
     }
     new_path
+}
+
+fn compile_cpp() {
+    let command = String::from("g++ ./source/main.cpp -o ./target/debug/main.exe");
+    match shell_command(command) {
+        Ok(status) => {
+            if (status.success()) {
+                println!("Finished");
+            } else {
+                println!("Error compiling!");
+            }
+        },
+        Err(e) => println!("{}", e);
+    }
 }
 
 fn compile_c() {
