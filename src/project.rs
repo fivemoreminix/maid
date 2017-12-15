@@ -73,7 +73,6 @@ int main(int argc, char **argv)
 
         // Deserialize the TOML
         let project: Project = ::toml::from_str(contents.as_str()).unwrap();
-        println!("{:?}", project);
 
         project
     }

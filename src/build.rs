@@ -54,15 +54,17 @@ pub fn build(release: bool) {
 /// Executes a shell command in the background
 fn shell_command(command: String) -> Result<ExitStatus, ::std::io::Error> {
     // Turn the String into a Vec<String>
-    let vector: Vec<String> = command.split_whitespace().map(|s| s.to_owned()).collect();
-
     if cfg!(target_os = "windows") {
+        let vector: Vec<String> = unix_to_windows_path(command).split_whitespace().map(|s| s.to_owned()).collect();
+
         let status = Command::new("cmd")
             .arg("/C")
             .args(vector.as_slice())
             .status()?;
         Ok(status)
     } else {
+        let vector: Vec<String> = command.split_whitespace().map(|s| s.to_owned()).collect();
+
         let status = Command::new("sh")
             .arg("-c")
             .args(vector.as_slice())
@@ -71,28 +73,34 @@ fn shell_command(command: String) -> Result<ExitStatus, ::std::io::Error> {
     }
 }
 
-fn compile_c() {
-    let command = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .arg("/C")
-            .arg("gcc")
-            .arg(".\\source\\main.c")
-            .arg("-o")
-            .arg(".\\target\\debug\\main.exe")
-            .output()
-            .expect("failed to execute gcc")
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg("gcc")
-            .arg("./source/main.c")
-            .arg("-o")
-            .arg("./target/debug/main")
-            .output()
-            .expect("failed to execute gcc")
-    };
+fn unix_to_windows_path(path: String) -> String {
+    // Create an iterator over the characters in the path
+    let chars = path.chars();
+    // Make an empty String
+    let mut new_path = String::new();
+    // Iterate over every character in the path
+    for c in chars {
+        if c == '/' {
+            // If a character is a forward slash, push the Windows version
+            new_path.push('\\');
+        } else {
+            // If it's not a forward slash, just push the character
+            new_path.push(c);
+        }
+    }
+    new_path
+}
 
-    let stdout = String::from_utf8(command.stdout).unwrap();
-    let stderr = String::from_utf8(command.stderr).unwrap();
-    println!("Stdout: {:?}\nStderr: {:?}", stdout, stderr);
+fn compile_c() {
+    let command = String::from("gcc ./source/main.c -o ./target/debug/main.exe");
+    match shell_command(command) {
+        Ok(status) => {
+            if (status.success()) {
+                println!("Finished");
+            } else {
+                println!("Error compiling!");
+            }
+        },
+        Err(e) => println!("{}", e),
+    }
 }
