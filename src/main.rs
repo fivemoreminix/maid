@@ -16,6 +16,9 @@ enum Options {
     #[structopt(name = "new")]
     /// Creates a new project folder in the current directory
     New {
+        #[structopt(long = "lib")]
+        /// Generates the project with the static library template
+        lib: bool,
         name: String,
     },
     #[structopt(name = "test")]
@@ -28,8 +31,12 @@ fn main() {
     let options = Options::from_args();
 
     match options {
-        Options::New{name} => {
-            let project = Project::new(name.as_str());
+        Options::New{name, lib} => {
+            if lib {
+                Project::new(name.as_str(), String::from("static"));
+            } else {
+                Project::new(name.as_str(), String::from("executable"));
+            }
         },
         Options::Test{} => {
             let project = Project::get(".");

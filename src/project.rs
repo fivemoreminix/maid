@@ -11,18 +11,12 @@ pub struct Package {
     name: String,
     version: String,
     authors: Vec<String>,
-    //type: String,
+    target: String,
 }
-/*
-pub enum PackageType {
-    Shared, // A .dll or .so target
-    Static, // A .o target
-    Binary, // An executable target
-}*/
 
 impl Project {
     /// Creates a new project and returns it's properties.
-    pub fn new(name: &str, /*type: PackageType*/) -> Project {
+    pub fn new(name: &str, target: String) -> Project {
         // Create the project directory
         DirBuilder::new().create(format!("./{}", name)).unwrap();
         // Create the project file in the new folder
@@ -34,6 +28,7 @@ impl Project {
                 name: name.to_owned(),
                 version: String::from("0.1.0"),
                 authors: vec!(String::from("test")),
+                target: target,
             }
         };
         // Serialize the project into TOML
@@ -55,7 +50,7 @@ impl Project {
         let mut contents = String::new();
         // Read the file into the String `contents`
         project_file.read_to_string(&mut contents).unwrap();
-
+        // Deserialize the TOML
         let project: Project = ::toml::from_str(contents.as_str()).unwrap();
         println!("{:?}", project);
 
