@@ -1,5 +1,0 @@
-[package]
-name = "testabc"
-version = "0.1.0"
-authors = ["test"]
-target = "executable"
