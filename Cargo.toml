@@ -1,0 +1,9 @@
+[package]
+name = "maid"
+version = "0.1.0"
+authors = ["Luke Wilson"]
+
+[dependencies]
+structopt = "0.1.6"
+structopt-derive = "0.1.6"
+toml = "0.4.5"
