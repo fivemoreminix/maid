@@ -1,19 +1,20 @@
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
+#[macro_use]
+extern crate serde_derive;
 extern crate toml;
 
 mod project;
 
+use structopt::StructOpt;
 use project::Project;
 
-use structopt::StructOpt;
-
 #[derive(StructOpt, Debug)]
-#[structopt(name = "maid", about = "The easy, modern build tool for C, C++, and Assembly.")]
+#[structopt(name = "maid", about = "A simple project manager for C, C++, Assembly, and anything else.")]
 enum Options {
     #[structopt(name = "new")]
-    /// Create a new project folder
+    /// Creates a new project folder in the current directory
     New {
         name: String,
     },
@@ -25,7 +26,6 @@ enum Options {
 
 fn main() {
     let options = Options::from_args();
-    println!("{:?}", options);
 
     match options {
         Options::New{name} => {
