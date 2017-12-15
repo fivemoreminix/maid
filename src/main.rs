@@ -5,6 +5,7 @@ extern crate structopt_derive;
 extern crate serde_derive;
 extern crate toml;
 
+mod build;
 mod project;
 
 use structopt::StructOpt;
@@ -21,9 +22,11 @@ enum Options {
         lib: bool,
         name: String,
     },
-    #[structopt(name = "test")]
-    Test {
-
+    #[structopt(name = "build")]
+    Build {
+        #[structopt(long = "release")]
+        /// Compiles with optimizations
+        release: bool,
     },
 }
 
@@ -38,8 +41,8 @@ fn main() {
                 Project::new(name.as_str(), String::from("executable"));
             }
         },
-        Options::Test{} => {
-            let project = Project::get(".");
+        Options::Build{release} => {
+            build::build(release);
         }
     }
 }

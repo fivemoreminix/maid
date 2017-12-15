@@ -18,7 +18,7 @@ impl Project {
     /// Creates a new project and returns it's properties.
     pub fn new(name: &str, target: String) -> Project {
         // Create the project directory
-        let mut dir_builder = DirBuilder::new();
+        let dir_builder = DirBuilder::new();
         dir_builder.create(format!("./{}", name)).unwrap();
         dir_builder.create(format!("./{}/source", name)).unwrap();
         dir_builder.create(format!("./{}/include", name)).unwrap();
@@ -26,7 +26,7 @@ impl Project {
         // Create the template main.c source file
         let mut source_file = File::create(format!("./{}/source/main.c", name)).unwrap();
         write!(source_file, "{}",
-r#"#include <stdout.h>
+r#"#include <stdio.h>
 
 int main(int argc, char **argv)
 {
