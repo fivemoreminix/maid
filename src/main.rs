@@ -42,9 +42,9 @@ fn main() {
     match options {
         Options::New{name, lib} => {
             if lib {
-                Project::new(name.as_str(), String::from("static"));
+                Project::new(name, String::from("static"));
             } else {
-                Project::new(name.as_str(), String::from("executable"));
+                Project::new(name, String::from("executable"));
             }
         },
         Options::Build{release} => {

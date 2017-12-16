@@ -26,7 +26,7 @@ pub enum Target {
 
 impl Project {
     /// Creates a new project and returns it's properties.
-    pub fn new(name: &str, target: String) -> Project {
+    pub fn new(name: String, target: String) -> Project {
         // Create the project directory
         let dir_builder = DirBuilder::new();
         dir_builder.create(format!("./{}", name)).unwrap();
