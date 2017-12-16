@@ -6,15 +6,6 @@ use project::Project;
 pub fn build(release: bool) -> Result<(), &'static str> {
 
     let project = Project::get(".")?;
-    /*
-    match Project::get(".") {
-        Ok(val) => project = val,
-        Err(e) => {
-            println!("{}", e);
-            return;
-        },
-    }
-    */
 
     let mut dir_builder = DirBuilder::new();
     dir_builder.recursive(true);
@@ -172,13 +163,10 @@ fn compile(project: Project, release: bool, sources: Vec<String>, language: Lang
     } else {
         command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
     }
-    println!("Command: {:?}", command);
 
     match shell_command(command) {
         Ok(status) => {
-            if status.success() {
-                println!("Finished");
-            } else {
+            if !status.success() {
                 println!("Error compiling!");
             }
         },

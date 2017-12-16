@@ -10,8 +10,7 @@ mod project;
 
 use structopt::StructOpt;
 use project::Project;
-use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
+use std::process::Command;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
@@ -79,8 +78,6 @@ fn main() {
                     .arg("/C")
                     .arg(format!(".\\target\\debug\\{}.exe", project.package.name))
                     .arg(arguments)
-                    .stdout(Stdio::piped())
-                    .stderr(Stdio::piped())
                     .spawn()
                     .expect("execute built program at ./target/debug/")
             } else {
@@ -88,25 +85,9 @@ fn main() {
                     .arg("-c")
                     .arg(format!("./target/debug/{}", project.package.name))
                     .arg(arguments)
-                    .stdout(Stdio::piped())
-                    .stderr(Stdio::piped())
                     .spawn()
                     .expect("execute built program at ./target/debug/")
             };
-
-            if let Some(ref mut stdout) = child.stdout {
-                println!("[stdout]");
-                for line in BufReader::new(stdout).lines() {
-                    println!("{}", line.unwrap());
-                }
-            }
-
-            if let Some(ref mut stderr) = child.stderr {
-                println!("[stderr]");
-                for line in BufReader::new(stderr).lines() {
-                    println!("{}", line.unwrap());
-                }
-            }
 
             let status = child.wait().unwrap();
             match status.code() {
