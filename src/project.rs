@@ -3,15 +3,15 @@ use std::io::{Write, Read};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
-    package: Package
+    pub package: Package
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Package {
-    name: String,
-    version: String,
-    authors: Vec<String>,
-    target: String,
+    pub name: String,
+    pub version: String,
+    pub authors: Vec<String>,
+    pub target: String,
 }
 
 impl Project {
@@ -60,12 +60,16 @@ int main(int argc, char **argv)
         project
     }
     /// Gets the Project in the directory given (no "/" at the end)
-    pub fn get(dir: &str) -> Project {
+    pub fn get(dir: &str) -> Result<Project, ()> {
         // Ensure the given directory doesn't end with a "/"
         assert!(!dir.ends_with("/"));
 
         // Open the project file
-        let mut project_file = File::open(format!("{}/maid.toml", dir)).unwrap();
+        let mut project_file: File;
+        match File::open(format!("{}/maid.toml", dir)) {
+            Ok(val) => project_file = val,
+            Err(_) => return Err(()),
+        }
 
         let mut contents = String::new();
         // Read the file into the String `contents`
@@ -74,6 +78,6 @@ int main(int argc, char **argv)
         // Deserialize the TOML
         let project: Project = ::toml::from_str(contents.as_str()).unwrap();
 
-        project
+        Ok(project)
     }
 }

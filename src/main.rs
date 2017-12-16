@@ -12,7 +12,7 @@ use structopt::StructOpt;
 use project::Project;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "maid", about = "A simple project manager for C, C++, Assembly, and anything else.")]
+#[structopt(name = "maid", about = "A simple project manager for C, C++, and anything else.")]
 enum Options {
     #[structopt(name = "new")]
     /// Creates a new project folder in the current directory

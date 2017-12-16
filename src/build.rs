@@ -1,10 +1,18 @@
-use std::fs::{self, DirBuilder};
-use std::path::Path;
+use std::fs::{self, DirBuilder, File};
+use std::path::{Path, PathBuf};
 use std::process::{ExitStatus, Command};
-use project;
+use project::Project;
 
 pub fn build(release: bool) {
-    let project = project::Project::get(".");
+
+    let project: Project;
+    match Project::get(".") {
+        Ok(val) => project = val,
+        Err(_) => {
+            println!("There is no maid.toml file in the current directory.");
+            return;
+        },
+    }
 
     let mut dir_builder = DirBuilder::new();
     dir_builder.recursive(true);
@@ -21,33 +29,52 @@ pub fn build(release: bool) {
     // Ensure the path is correct, and that it is a directory
     assert!(source_dir.is_dir());
 
-    // Indecisively select custom
-    let mut language = String::from("custom");
+    let mut language = String::new();
 
-    // Find the dominant language used. (Extension of the main file)
-    for entry in fs::read_dir(source_dir).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        if path.is_dir() {
-            // TODO: consider use
-            unimplemented!();
+    // The path to every source file in source/
+    let mut sources = Vec::<String>::new();
+
+    for path in get_files_in_directory(Path::new("./source")) {
+        let ext = path.extension().unwrap();
+        if path.file_stem().unwrap().to_str() == Some("main") {
+            language = ext.to_str().unwrap().to_owned();
+            // NOTE: we don't push the main.(c/cpp) file, because its
+            // automatically loaded by compile_c() / compile_cpp().
         } else {
-            // Only do this for files that have extensions
-            if let Some(ext) = path.extension() {
-                if path.file_stem().unwrap().to_str() == Some("main") {
-                    // The language we're using is the extension of the main file
-                    language = ext.to_str().unwrap().to_owned();
-                }
+            // When the file is not main
+            if ext == "c" || ext == "cpp" {
+                // Push the source file (as long as it is a recognized source file)
+                sources.push(path.to_str().unwrap().to_owned());
             }
         }
     }
 
     // We only support ".c", ".cpp", and ".asm" extensions (besides custom)
     match language.as_str() {
-        "c" => compile_c(),
-        "cpp" => compile_cpp(),
+        "c" => compile_c(project, release, sources),
+        "cpp" => compile_cpp(project, release, sources),
         _ => return,
     }
+}
+
+fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {
+    // It must be a directory
+    assert!(directory.is_dir());
+
+    let mut files = Vec::<PathBuf>::new();
+
+    // We will get a list of entires in the directory
+    for entry in fs::read_dir(directory).unwrap() {
+        let entry = entry.unwrap();
+        let path = entry.path();
+        if path.is_dir() {
+            // What do we do with a directory?
+        } else {
+            // It's a file, so we add it
+            files.push(path);
+        }
+    }
+    files
 }
 
 /// Executes a shell command in the background
@@ -90,25 +117,59 @@ fn unix_to_windows_path(path: String) -> String {
     new_path
 }
 
-fn compile_cpp() {
-    let command = String::from("g++ ./source/main.cpp -o ./target/debug/main.exe");
+fn compile_cpp(project: Project, release: bool, sources: Vec<String>) {
+    let mut command = String::new();
+    // TODO: push compiler name depending on choice
+    command.push_str("g++");
+
+    // Source files, then headers
+    command.push_str(" ./source/main.cpp");
+
+    for source in sources {
+        command.push_str(format!(" {}", source).as_str());
+    }
+
+    if cfg!(target_os = "windows") {
+        command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
+    } else {
+        command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+    }
+    println!("Command: {:?}", command);
+
     match shell_command(command) {
         Ok(status) => {
-            if (status.success()) {
+            if status.success() {
                 println!("Finished");
             } else {
                 println!("Error compiling!");
             }
         },
-        Err(e) => println!("{}", e);
+        Err(e) => println!("{}", e),
     }
 }
 
-fn compile_c() {
-    let command = String::from("gcc ./source/main.c -o ./target/debug/main.exe");
+fn compile_c(project: Project, release: bool, sources: Vec<String>) {
+    let mut command = String::new();
+    // TODO: push compiler name depending on choice
+    command.push_str("gcc");
+
+    // Source files, then headers
+    command.push_str(" ./source/main.c");
+
+    for source in sources {
+        command.push_str(format!(" {}", source).as_str());
+    }
+
+    if cfg!(target_os = "windows") {
+        command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
+    } else {
+        command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+    }
+    println!("Command: {:?}", command);
+
     match shell_command(command) {
         Ok(status) => {
-            if (status.success()) {
+            if status.success() {
                 println!("Finished");
             } else {
                 println!("Error compiling!");
