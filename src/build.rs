@@ -1,4 +1,4 @@
-use std::fs::{self, DirBuilder};
+use std::fs::{self, File, DirBuilder};
 use std::path::{Path, PathBuf};
 use std::process::{ExitStatus, Command};
 use project::{Project, Target};
@@ -11,7 +11,29 @@ pub fn build(release: bool) -> Result<(), &'static str> {
     // is used to custom build. This enables anyone to make any
     // kind of project they need.
     if project.get_target().expect("target configuration") == Target::Python {
-        unimplemented!();
+        if Path::new("./build.py").exists() {
+            // Execute the python file
+            let mut child = if cfg!(target_os = "windows") {
+                Command::new("cmd")
+                    .arg("/C")
+                    .arg("python .\\build.py")
+                    .spawn()
+                    .expect("execute build.py")
+            } else {
+                Command::new("sh")
+                    .arg("-c")
+                    .arg("python ./build.py")
+                    .spawn()
+                    .expect("execute build.py")
+            };
+            // Wait for the Python program to finish
+            child.wait().unwrap();
+
+            println!("Finished");
+        } else {
+            return Err("The target configuration is set to Python, but I can't find the file 'build.py' at the root of the project.");
+        }
+        return Ok(());
     }
 
     let mut dir_builder = DirBuilder::new();
@@ -79,7 +101,7 @@ fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {
 }
 
 /// Executes a shell command in the background
-pub fn shell_command(command: String) -> Result<ExitStatus, ::std::io::Error> {
+pub fn shell_command(command: String) -> Result<(), ::std::io::Error> {
     // Turn the String into a Vec<String>
     if cfg!(target_os = "windows") {
         let vector: Vec<String> = windows_path(command).split_whitespace().map(|s| s.to_owned()).collect();
@@ -87,16 +109,18 @@ pub fn shell_command(command: String) -> Result<ExitStatus, ::std::io::Error> {
         let status = Command::new("cmd")
             .arg("/C")
             .args(vector.as_slice())
-            .status()?;
-        Ok(status)
+            .spawn()?;
+        
+        Ok(())
     } else {
         let vector: Vec<String> = command.split_whitespace().map(|s| s.to_owned()).collect();
 
         let status = Command::new("sh")
             .arg("-c")
             .args(vector.as_slice())
-            .status()?;
-        Ok(status)
+            .spawn()?;
+
+        Ok(())
     }
 }
 
@@ -118,27 +142,6 @@ pub fn windows_path(path: String) -> String {
     }
     new_path
 }
-
-/* TODO: find out if this is needed for Unix developers
-/// Takes a String and turns all occurrences of '\' into '/'.
-fn unix_path(path: String) -> String {
-    // Create an iterator over the characters in the path
-    let chars = path.chars();
-    // Make an empty String
-    let mut new_path = String::new();
-    // Iterate over every character in the path
-    for c in chars {
-        if c == '\\' {
-            // If a character is a backslash, push a forward slash
-            new_path.push('/');
-        } else {
-            // If it's not a backslash, just push the character
-            new_path.push(c);
-        }
-    }
-    new_path
-}
-*/
 
 pub enum Language {
     C,
@@ -172,11 +175,7 @@ fn compile(project: Project, release: bool, sources: Vec<String>, language: Lang
     }
 
     match shell_command(command) {
-        Ok(status) => {
-            if !status.success() {
-                println!("Error compiling!");
-            }
-        },
         Err(e) => println!("{}", e),
+        _ => {}
     }
 }
