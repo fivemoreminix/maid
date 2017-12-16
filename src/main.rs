@@ -9,7 +9,7 @@ mod build;
 mod project;
 
 use structopt::StructOpt;
-use project::Project;
+use project::{Project, Target};
 use std::process::Command;
 
 #[derive(StructOpt, Debug)]
@@ -31,7 +31,8 @@ enum Options {
     },
     #[structopt(name = "run")]
     Run {
-        program_arguments: Option<String>,
+        /// Arguments to pass to the binary on execution (use "quotes")
+        arguments: Option<String>,
     },
 }
 
@@ -49,50 +50,72 @@ fn main() {
         Options::Build{release} => {
             match build::build(release) {
                 Err(e) => {
-                    println!("{}", e);
+                    eprintln!("{}", e);
                     return;
                 },
                 _ => {},
             }
         },
-        Options::Run{program_arguments} => {
+        Options::Run{arguments} => {
             // Get the project file
             let project: Project;
             match Project::get(".") {
                 Ok(val) => project = val,
                 Err(e) => {
-                    println!("{}", e);
+                    eprintln!("{}", e);
                     return;
                 }
             }
+
             // Unwrap the program arguments
-            let arguments = match program_arguments {
+            let program_arguments = match arguments {
                 Some(v) => v,
                 None => String::from(""),
             };
-            // Build the program in debug mode
-            build::build(false).unwrap();
-            // Execute the generated binary
-            let mut child = if cfg!(target_os = "windows") {
-                Command::new("cmd")
-                    .arg("/C")
-                    .arg(format!(".\\target\\debug\\{}.exe", project.package.name))
-                    .arg(arguments)
-                    .spawn()
-                    .expect("execute built program at ./target/debug/")
-            } else {
-                Command::new("sh")
-                    .arg("-c")
-                    .arg(format!("./target/debug/{}", project.package.name))
-                    .arg(arguments)
-                    .spawn()
-                    .expect("execute built program at ./target/debug/")
-            };
 
-            let status = child.wait().unwrap();
-            match status.code() {
-                Some(code) => println!("Finished with code: {}", code),
-                None => println!("Finished"),
+            // Build the program in debug mode
+            match build::build(false) {
+                Err(e) => {
+                    eprintln!("{}", e);
+                    return;
+                },
+                _ => {}
+            }
+
+            // Prevent them from being able to run the program if it is not executable
+            if project.package.target != "executable" && !project.is_custom() {
+                eprintln!(
+"Oops!\nYour project file shows that this binary aims to be {}, but I can't execute those.\n{}{}",
+project.package.target,
+"(To be able to execute your program, please change the configuration \"target\" to equal",
+" \"executable\", in your project file)\nI built the program for you anyways. :)");
+                // It's real ugly, but it works ¯\_(ツ)_/¯
+                return;
+            } else if project.get_target().expect("target configuration") == Target::Executable {
+                // Execute the generated binary
+                let mut child = if cfg!(target_os = "windows") {
+                    Command::new("cmd")
+                        .arg("/C")
+                        .arg(format!(".\\target\\debug\\{}.exe", project.package.name))
+                        .arg(program_arguments)
+                        .spawn()
+                        .expect("execute built program at ./target/debug/")
+                } else {
+                    Command::new("sh")
+                        .arg("-c")
+                        .arg(format!("./target/debug/{}", project.package.name))
+                        .arg(program_arguments)
+                        .spawn()
+                        .expect("execute built program at ./target/debug/")
+                };
+
+                let status = child.wait().unwrap();
+                match status.code() {
+                    Some(code) => println!("Finished with code: {}", code),
+                    // If, by chance, the program we executed does not return an error code,
+                    // we just report that it has finished.
+                    None => println!("Finished"),
+                }
             }
         },
     }

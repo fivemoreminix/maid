@@ -14,6 +14,16 @@ pub struct Package {
     pub target: String,
 }
 
+#[derive(PartialEq)]
+pub enum Target {
+    // C and C++
+    Executable,
+    Static,
+    Dynamic,
+    // Scripting
+    Python,
+}
+
 impl Project {
     /// Creates a new project and returns it's properties.
     pub fn new(name: &str, target: String) -> Project {
@@ -79,5 +89,28 @@ int main(int argc, char **argv)
         let project: Project = ::toml::from_str(contents.as_str()).unwrap();
 
         Ok(project)
+    }
+
+    /// Returns true if this project is not using conventional build settings. (They are not using
+    // target = "executable", "static", or "dynamic", in their project file)
+    pub fn is_custom(&self) -> bool {
+        if self.package.target == "executable"
+        || self.package.target == "static"
+        || self.package.target == "dynamic" {
+            false
+        } else {
+            true
+        }
+    }
+
+    /// Safely get the project's target, without risking typos.
+    pub fn get_target(&self) -> Option<Target> {
+        match self.package.target.as_str() {
+            "executable" => Some(Target::Executable),
+            "static"     => Some(Target::Static),
+            "dynamic"    => Some(Target::Dynamic),
+            "python"     => Some(Target::Python),
+            _ =>            None,
+        }
     }
 }
