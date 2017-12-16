@@ -56,63 +56,63 @@ fn main() {
                 _ => {},
             }
         },
-Options::Run{program_arguments} => {
-    // Get the project file
-    let project: Project;
-    match Project::get(".") {
-        Ok(val) => project = val,
-        Err(e) => {
-            println!("{}", e);
-            return;
-        }
-    }
-    // Unwrap the program arguments
-    let arguments = match program_arguments {
-        Some(v) => v,
-        None => String::from(""),
-    };
-    // Build the program in debug mode
-    build::build(false).unwrap();
-    // Execute the generated binary
-    let mut child = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .arg("/C")
-            .arg(format!(".\\target\\debug\\{}.exe", project.package.name))
-            .arg(arguments)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .expect("execute built program at ./target/debug/")
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg(format!("./target/debug/{}", project.package.name))
-            .arg(arguments)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .expect("execute built program at ./target/debug/")
-    };
+        Options::Run{program_arguments} => {
+            // Get the project file
+            let project: Project;
+            match Project::get(".") {
+                Ok(val) => project = val,
+                Err(e) => {
+                    println!("{}", e);
+                    return;
+                }
+            }
+            // Unwrap the program arguments
+            let arguments = match program_arguments {
+                Some(v) => v,
+                None => String::from(""),
+            };
+            // Build the program in debug mode
+            build::build(false).unwrap();
+            // Execute the generated binary
+            let mut child = if cfg!(target_os = "windows") {
+                Command::new("cmd")
+                    .arg("/C")
+                    .arg(format!(".\\target\\debug\\{}.exe", project.package.name))
+                    .arg(arguments)
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .expect("execute built program at ./target/debug/")
+            } else {
+                Command::new("sh")
+                    .arg("-c")
+                    .arg(format!("./target/debug/{}", project.package.name))
+                    .arg(arguments)
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .expect("execute built program at ./target/debug/")
+            };
 
-    if let Some(ref mut stdout) = child.stdout {
-        println!("[stdout]");
-        for line in BufReader::new(stdout).lines() {
-            println!("{}", line.unwrap());
-        }
-    }
+            if let Some(ref mut stdout) = child.stdout {
+                println!("[stdout]");
+                for line in BufReader::new(stdout).lines() {
+                    println!("{}", line.unwrap());
+                }
+            }
 
-    if let Some(ref mut stderr) = child.stderr {
-        println!("[stderr]");
-        for line in BufReader::new(stderr).lines() {
-            println!("{}", line.unwrap());
-        }
-    }
+            if let Some(ref mut stderr) = child.stderr {
+                println!("[stderr]");
+                for line in BufReader::new(stderr).lines() {
+                    println!("{}", line.unwrap());
+                }
+            }
 
-    let status = child.wait().unwrap();
-    match status.code() {
-        Some(code) => println!("Finished with code: {}", code),
-        None => println!("Finished"),
-    }
-},
+            let status = child.wait().unwrap();
+            match status.code() {
+                Some(code) => println!("Finished with code: {}", code),
+                None => println!("Finished"),
+            }
+        },
     }
 }
