@@ -1,18 +1,20 @@
-use std::fs::{self, DirBuilder, File};
+use std::fs::{self, DirBuilder};
 use std::path::{Path, PathBuf};
 use std::process::{ExitStatus, Command};
 use project::Project;
 
-pub fn build(release: bool) {
+pub fn build(release: bool) -> Result<(), &'static str> {
 
-    let project: Project;
+    let project = Project::get(".")?;
+    /*
     match Project::get(".") {
         Ok(val) => project = val,
-        Err(_) => {
-            println!("There is no maid.toml file in the current directory.");
+        Err(e) => {
+            println!("{}", e);
             return;
         },
     }
+    */
 
     let mut dir_builder = DirBuilder::new();
     dir_builder.recursive(true);
@@ -51,10 +53,11 @@ pub fn build(release: bool) {
 
     // We only support ".c", ".cpp", and ".asm" extensions (besides custom)
     match language.as_str() {
-        "c" => compile_c(project, release, sources),
-        "cpp" => compile_cpp(project, release, sources),
-        _ => return,
+        "c" => compile(project, release, sources, Language::C),
+        "cpp" => compile(project, release, sources, Language::Cpp),
+        _ => return Ok(()),
     }
+    Ok(())
 }
 
 fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {
@@ -78,10 +81,10 @@ fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {
 }
 
 /// Executes a shell command in the background
-fn shell_command(command: String) -> Result<ExitStatus, ::std::io::Error> {
+pub fn shell_command(command: String) -> Result<ExitStatus, ::std::io::Error> {
     // Turn the String into a Vec<String>
     if cfg!(target_os = "windows") {
-        let vector: Vec<String> = unix_to_windows_path(command).split_whitespace().map(|s| s.to_owned()).collect();
+        let vector: Vec<String> = windows_path(command).split_whitespace().map(|s| s.to_owned()).collect();
 
         let status = Command::new("cmd")
             .arg("/C")
@@ -99,7 +102,8 @@ fn shell_command(command: String) -> Result<ExitStatus, ::std::io::Error> {
     }
 }
 
-fn unix_to_windows_path(path: String) -> String {
+/// Takes a String and turns all occurrences of '/' into '\'.
+pub fn windows_path(path: String) -> String {
     // Create an iterator over the characters in the path
     let chars = path.chars();
     // Make an empty String
@@ -117,44 +121,47 @@ fn unix_to_windows_path(path: String) -> String {
     new_path
 }
 
-fn compile_cpp(project: Project, release: bool, sources: Vec<String>) {
-    let mut command = String::new();
-    // TODO: push compiler name depending on choice
-    command.push_str("g++");
-
-    // Source files, then headers
-    command.push_str(" ./source/main.cpp");
-
-    for source in sources {
-        command.push_str(format!(" {}", source).as_str());
+/* TODO: find out if this is needed for Unix developers
+/// Takes a String and turns all occurrences of '\' into '/'.
+fn unix_path(path: String) -> String {
+    // Create an iterator over the characters in the path
+    let chars = path.chars();
+    // Make an empty String
+    let mut new_path = String::new();
+    // Iterate over every character in the path
+    for c in chars {
+        if c == '\\' {
+            // If a character is a backslash, push a forward slash
+            new_path.push('/');
+        } else {
+            // If it's not a backslash, just push the character
+            new_path.push(c);
+        }
     }
+    new_path
+}
+*/
 
-    if cfg!(target_os = "windows") {
-        command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
-    } else {
-        command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
-    }
-    println!("Command: {:?}", command);
-
-    match shell_command(command) {
-        Ok(status) => {
-            if status.success() {
-                println!("Finished");
-            } else {
-                println!("Error compiling!");
-            }
-        },
-        Err(e) => println!("{}", e),
-    }
+pub enum Language {
+    C,
+    Cpp,
 }
 
-fn compile_c(project: Project, release: bool, sources: Vec<String>) {
+fn compile(project: Project, release: bool, sources: Vec<String>, language: Language) {
     let mut command = String::new();
     // TODO: push compiler name depending on choice
-    command.push_str("gcc");
-
-    // Source files, then headers
-    command.push_str(" ./source/main.c");
+    match language {
+        Language::C => {
+            // Compiler
+            command.push_str("gcc");
+            command.push_str(" ./source/main.c");
+        },
+        Language::Cpp => {
+            // Compiler
+            command.push_str("g++");
+            command.push_str(" ./source/main.cpp");
+        },
+    }
 
     for source in sources {
         command.push_str(format!(" {}", source).as_str());

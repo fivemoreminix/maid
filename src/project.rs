@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         source_file.sync_data().unwrap();
 
         // Create the project file in the new folder
-        let mut project_file = File::create(format!("./{}/maid.toml", name)).unwrap();
+        let mut project_file = File::create(format!("./{}/Maid.toml", name)).unwrap();
 
         // Initialize the project
         let project = Project {
@@ -60,15 +60,15 @@ int main(int argc, char **argv)
         project
     }
     /// Gets the Project in the directory given (no "/" at the end)
-    pub fn get(dir: &str) -> Result<Project, ()> {
+    pub fn get(dir: &str) -> Result<Project, &'static str> {
         // Ensure the given directory doesn't end with a "/"
         assert!(!dir.ends_with("/"));
 
         // Open the project file
         let mut project_file: File;
-        match File::open(format!("{}/maid.toml", dir)) {
+        match File::open(format!("{}/Maid.toml", dir)) {
             Ok(val) => project_file = val,
-            Err(_) => return Err(()),
+            Err(_) => return Err("There is no Maid.toml file in the current directory."),
         }
 
         let mut contents = String::new();
