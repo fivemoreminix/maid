@@ -17,3 +17,11 @@ Instead, I tried to forget all the things that were going to hold me back, and j
 I don't usually comment my code like that, but *I'd rather someone know way more than needed, than not having a clue.*
 ## Does using Maid decrease compilation flexability?
 Currently, it does. But in the future, when I've had a chance to work on compilation more, you'll never need to build manually. **I aspire to make operating systems, and if I thought that Maid wouldn't be able to do this for me, I'd never have started working on it.**
+## Why make something like this for C/C++ if we have Rust?
+Rust is a great language, but there are a few times you may find yourself wanting to make a project in C++. Here are just a few reasons you may find Maid useful:
+*(Instead of saying "C/C++" a hundred times, I'll just say "C", but I also mean "C++" when I do)*
+* C is very stable and does not change often. Rust is still developing, and it's always changing.
+* C has tons of libraries and support.
+* While we must love Rust and not like C for being unsafe or inconvenient, we must still love them for being where we've evolved.
+* C has tons of use and is still the prodominant language in the systems programming industry.
+* Most IDEs or build tools for C can be complicated and difficult to prototype projects with because you're writing more build scripts than you are code.
