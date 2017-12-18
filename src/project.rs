@@ -50,7 +50,7 @@ int main(int argc, char **argv)
         let mut project_file = File::create(format!("./{}/Maid.toml", name)).unwrap();
 
         // Initialize the project
-        let mut project = Project {
+        let project = Project {
             package: Package {
                 name: name.to_owned(),
                 version: String::from("0.1.0"),
@@ -58,19 +58,6 @@ int main(int argc, char **argv)
                 target: target,
             }
         };
-
-        // Set the project.package.target configuration from the parameter 'target'.
-        /*
-        match target {
-            Target::Dynamic => project.package.target = String::from("dynamic"),
-            Target::Static  => project.package.target = String::from("static"),
-            // NOTE: "executable" is hardcoded by default
-            
-            Target::Python  => project.package.target = String::from("python"),
-
-            _ => {},
-        }
-        */
 
         // Serialize the project into TOML
         let toml: String = ::toml::to_string(&project).unwrap();

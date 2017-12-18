@@ -10,6 +10,7 @@ mod project;
 
 use structopt::StructOpt;
 use project::{Project, Target};
+use build::Release;
 use std::process::Command;
 
 #[derive(StructOpt, Debug)]
@@ -25,8 +26,8 @@ enum Options {
     },
     #[structopt(name = "build")]
     Build {
-        #[structopt(long = "release")]
-        /// Compiles with optimizations
+        #[structopt(short = "r", long = "release")]
+        /// Compiles with all optimizations
         release: bool,
     },
     #[structopt(name = "run")]
@@ -48,7 +49,14 @@ fn main() {
             }
         },
         Options::Build{release} => {
-            match build::build(release) {
+
+            let build = if release {
+                build::build(Release::Release)
+            } else {
+                build::build(Release::Debug)
+            };
+
+            match build {
                 Err(e) => {
                     eprintln!("{}", e);
                     return;
@@ -74,7 +82,7 @@ fn main() {
             };
 
             // Build the program in debug mode
-            match build::build(false) {
+            match build::build(Release::Debug) {
                 Err(e) => {
                     eprintln!("{}", e);
                     return;

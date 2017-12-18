@@ -1,9 +1,9 @@
-use std::fs::{self, File, DirBuilder};
+use std::fs::{self, DirBuilder};
 use std::path::{Path, PathBuf};
-use std::process::{ExitStatus, Command};
+use std::process::Command;
 use project::{Project, Target};
 
-pub fn build(release: bool) -> Result<(), &'static str> {
+pub fn build(release: Release) -> Result<(), &'static str> {
 
     let project = Project::get(".")?;
 
@@ -38,7 +38,7 @@ pub fn build(release: bool) -> Result<(), &'static str> {
 
     let mut dir_builder = DirBuilder::new();
     dir_builder.recursive(true);
-    if release {
+    if release == Release::Release {
         // Make the release folder
         dir_builder.create("./target/release").unwrap();
     } else {
@@ -56,12 +56,13 @@ pub fn build(release: bool) -> Result<(), &'static str> {
     // The path to every source file in source/
     let mut sources = Vec::<String>::new();
 
+    // This is where we get our source files
     for path in get_files_in_directory(Path::new("./source")) {
         let ext = path.extension().unwrap();
         if path.file_stem().unwrap().to_str() == Some("main") {
             language = ext.to_str().unwrap().to_owned();
             // NOTE: we don't push the main.(c/cpp) file, because its
-            // automatically loaded by compile_c() / compile_cpp().
+            // automatically loaded by compile().
         } else {
             // When the file is not main
             if ext == "c" || ext == "cpp" {
@@ -148,7 +149,14 @@ pub enum Language {
     Cpp,
 }
 
-fn compile(project: Project, release: bool, sources: Vec<String>, language: Language) {
+#[derive(PartialEq)]
+/// For easily making new Release options.
+pub enum Release {
+    Release,
+    Debug,
+}
+
+fn compile(project: Project, release: Release, sources: Vec<String>, language: Language) {
     let mut command = String::new();
     // TODO: push compiler name depending on choice
     match language {
@@ -169,10 +177,29 @@ fn compile(project: Project, release: bool, sources: Vec<String>, language: Lang
     }
 
     if cfg!(target_os = "windows") {
-        command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
+        if release == Release::Debug {
+            command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
+        } else {
+            command.push_str(format!(" -o ./target/release/{}.exe", project.package.name).as_str());
+        }
     } else {
-        command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+        if release == Release::Debug {
+            command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+        } else {
+            command.push_str(format!(" -o ./target/release/{}", project.package.name).as_str());
+        }
     }
+
+    match release {
+        Release::Release => command.push_str(" -O3"),
+        Release::Debug => {
+            // Debugging optimization
+            command.push_str(" -Og");
+        }
+    }
+
+    // All warnings
+    command.push_str(" -w");
 
     match shell_command(command) {
         Err(e) => println!("{}", e),
