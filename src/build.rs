@@ -36,6 +36,27 @@ pub fn build(release: Release) -> Result<(), &'static str> {
         return Ok(());
     }
 
+    if Path::new("./build.py").exists() {
+        // If this project has a build.py file but does not specifically have
+        // Python as its target configuration, we just execute the file and continue
+        // building.
+        let mut child = if cfg!(target_os = "windows") {
+            Command::new("cmd")
+                .arg("/C")
+                .arg("python .\\build.py")
+                .spawn()
+                .expect("execute build.py")
+        } else {
+            Command::new("sh")
+                .arg("-c")
+                .arg("python ./build.py")
+                .spawn()
+                .expect("execute build.py")
+        };
+        // Wait for the Python program to finish before continuing
+        child.wait().unwrap();
+    }
+
     let mut dir_builder = DirBuilder::new();
     dir_builder.recursive(true);
     if release == Release::Release {
@@ -200,6 +221,9 @@ fn compile(project: Project, release: Release, sources: Vec<String>, language: L
 
     // All warnings
     command.push_str(" -w");
+
+    // Preprocessor defines
+    command.push_str(format!(" -D PACKAGE_NAME=\"{}\" -D PACKAGE_VERSION=\"{}\"", project.package.name, project.package.version).as_str());
 
     match shell_command(command) {
         Err(e) => println!("{}", e),
