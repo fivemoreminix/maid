@@ -6,6 +6,8 @@ I was never fond of writing C or C++. I liked the language, but it all just felt
 When I met [Cargo](https://github.com/rust-lang/cargo), I knew that I wanted the same for C++. I liked the simple configuration file and not having to deal with anything other than writing my code. It's just a few things that would make it difficult to create a Cargo-like software for C/C++: dependencies come in many forms, I don't have a lot of access to the compiler, and I've honestly never made anything like this before.
 
 Instead, I tried to forget all the things that were going to hold me back, and just started making *something that could compile the code you give it, manage it, and enable you to work with a high-level interface over your compiler.* It definitely makes it easier to start projects, and I'm starting to enjoy C and C++ development more.
+# Screenshots
+![preprocessor with Maid](https://github.com/lovesanxx/maid/tree/master/etc/images/preprocessor.png "Preprocessor Example")
 # FAQ
 ## Why so many comments in the code?
 I don't usually comment my code like that, but *I'd rather someone know way more than needed, than not having a clue.*
