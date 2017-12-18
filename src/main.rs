@@ -42,9 +42,9 @@ fn main() {
     match options {
         Options::New{name, lib} => {
             if lib {
-                Project::new(name, String::from("static"));
+                Project::new(name, project::Target::Static);
             } else {
-                Project::new(name, String::from("executable"));
+                Project::new(name, project::Target::Executable);
             }
         },
         Options::Build{release} => {
@@ -83,15 +83,15 @@ fn main() {
             }
 
             // Prevent them from being able to run the program if it is not executable
-            if project.package.target != "executable" && !project.is_custom() {
+            if project.package.target != project::Target::Executable && !project.is_custom() {
                 eprintln!(
-"Oops!\nYour project file shows that this binary aims to be {}, but I can't execute those.\n{}{}",
+"Oops!\nYour project file shows that this binary aims to be {:?}, but I can't execute those.\n{}{}",
 project.package.target,
 "(To be able to execute your program, please change the configuration \"target\" to equal",
 " \"executable\", in your project file)\nI built the program for you anyways. :)");
                 // It's real ugly, but it works ¯\_(ツ)_/¯
                 return;
-            } else if project.get_target().expect("target configuration") == Target::Executable {
+            } else if project.package.target == Target::Executable {
                 // Execute the generated binary
                 let mut child = if cfg!(target_os = "windows") {
                     Command::new("cmd")

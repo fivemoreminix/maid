@@ -10,7 +10,7 @@ pub fn build(release: bool) -> Result<(), &'static str> {
     // Python, like the other (future) supported scripting languages,
     // is used to custom build. This enables anyone to make any
     // kind of project they need.
-    if project.get_target().expect("target configuration") == Target::Python {
+    if project.package.target == Target::Python {
         if Path::new("./build.py").exists() {
             // Execute the python file
             let mut child = if cfg!(target_os = "windows") {
@@ -106,20 +106,20 @@ pub fn shell_command(command: String) -> Result<(), ::std::io::Error> {
     if cfg!(target_os = "windows") {
         let vector: Vec<String> = windows_path(command).split_whitespace().map(|s| s.to_owned()).collect();
 
-        let status = Command::new("cmd")
+        let mut status = Command::new("cmd")
             .arg("/C")
             .args(vector.as_slice())
             .spawn()?;
-        
+        status.wait().unwrap();
         Ok(())
     } else {
         let vector: Vec<String> = command.split_whitespace().map(|s| s.to_owned()).collect();
 
-        let status = Command::new("sh")
+        let mut status = Command::new("sh")
             .arg("-c")
             .args(vector.as_slice())
             .spawn()?;
-
+        status.wait().unwrap();
         Ok(())
     }
 }

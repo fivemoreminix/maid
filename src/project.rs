@@ -11,10 +11,10 @@ pub struct Package {
     pub name: String,
     pub version: String,
     pub authors: Vec<String>,
-    pub target: String,
+    pub target: Target,
 }
 
-#[derive(PartialEq)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum Target {
     // C and C++
     Executable,
@@ -26,7 +26,7 @@ pub enum Target {
 
 impl Project {
     /// Creates a new project and returns it's properties.
-    pub fn new(name: String, target: String) -> Project {
+    pub fn new(name: String, target: Target) -> Project {
         // Create the project directory
         let dir_builder = DirBuilder::new();
         dir_builder.create(format!("./{}", name)).unwrap();
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
         let mut project_file = File::create(format!("./{}/Maid.toml", name)).unwrap();
 
         // Initialize the project
-        let project = Project {
+        let mut project = Project {
             package: Package {
                 name: name.to_owned(),
                 version: String::from("0.1.0"),
@@ -58,6 +58,19 @@ int main(int argc, char **argv)
                 target: target,
             }
         };
+
+        // Set the project.package.target configuration from the parameter 'target'.
+        /*
+        match target {
+            Target::Dynamic => project.package.target = String::from("dynamic"),
+            Target::Static  => project.package.target = String::from("static"),
+            // NOTE: "executable" is hardcoded by default
+            
+            Target::Python  => project.package.target = String::from("python"),
+
+            _ => {},
+        }
+        */
 
         // Serialize the project into TOML
         let toml: String = ::toml::to_string(&project).unwrap();
@@ -94,23 +107,12 @@ int main(int argc, char **argv)
     /// Returns true if this project is not using conventional build settings. (They are not using
     // target = "executable", "static", or "dynamic", in their project file)
     pub fn is_custom(&self) -> bool {
-        if self.package.target == "executable"
-        || self.package.target == "static"
-        || self.package.target == "dynamic" {
+        if self.package.target == Target::Executable
+        || self.package.target == Target::Static
+        || self.package.target == Target::Dynamic {
             false
         } else {
             true
-        }
-    }
-
-    /// Safely get the project's target, without risking typos.
-    pub fn get_target(&self) -> Option<Target> {
-        match self.package.target.as_str() {
-            "executable" => Some(Target::Executable),
-            "static"     => Some(Target::Static),
-            "dynamic"    => Some(Target::Dynamic),
-            "python"     => Some(Target::Python),
-            _ =>            None,
         }
     }
 }
