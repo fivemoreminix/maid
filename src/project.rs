@@ -25,11 +25,11 @@ pub enum Target {
 }
 
 impl Project {
-    /// Creates a new project and returns it's properties.
+    /// Creates a new project and returns its properties.
     pub fn new(name: String, target: Target) -> Project {
         // Create the project directory
-        let dir_builder = DirBuilder::new();
-        dir_builder.create(format!("./{}", name)).unwrap();
+        let mut dir_builder = DirBuilder::new();
+        dir_builder.recursive(true);
         dir_builder.create(format!("./{}/source", name)).unwrap();
         dir_builder.create(format!("./{}/include", name)).unwrap();
 
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
             package: Package {
                 name: name.to_owned(),
                 version: String::from("0.1.0"),
-                authors: vec!(String::from("test")),
+                authors: vec!(String::from("Johnny Appleseed")),
                 target: target,
             }
         };
