@@ -7,7 +7,7 @@ When I met [Cargo](https://github.com/rust-lang/cargo), I knew that I wanted the
 
 Instead, I tried to forget all the things that were going to hold me back, and just started making *something that could compile the code you give it, manage it, and enable you to work with a high-level interface over your compiler.* It definitely makes it easier to start projects, and I'm starting to enjoy C and C++ development more.
 # Screenshots
-![preprocessor with Maid](https://github.com/lovesanxx/maid/tree/master/etc/images/preprocessor.png "Preprocessor Example")
+* ![preprocessor with Maid](https://github.com/lovesanxx/maid/tree/master/etc/images/preprocessor.png "Preprocessor Example")
 # FAQ
 ## Why so many comments in the code?
 I don't usually comment my code like that, but *I'd rather someone know way more than needed, than not having a clue.*
