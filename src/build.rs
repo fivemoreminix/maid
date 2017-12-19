@@ -3,7 +3,7 @@ use std::path::Path;
 use project::{Project, Target};
 use utils;
 
-pub fn build(release: Release) -> Result<(), &'static str> {
+pub fn build(release: bool) -> Result<(), &'static str> {
 
     let project = Project::get(".")?;
 
@@ -31,7 +31,7 @@ pub fn build(release: Release) -> Result<(), &'static str> {
 
     let mut dir_builder = DirBuilder::new();
     dir_builder.recursive(true);
-    if release == Release::Release {
+    if release {
         // Make the release folder
         dir_builder.create("./target/release").unwrap();
     } else {
@@ -44,16 +44,15 @@ pub fn build(release: Release) -> Result<(), &'static str> {
     // Ensure the path is correct, and that it is a directory
     assert!(source_dir.is_dir());
 
-    let mut language = String::new();
-
     // The path to every source file in source/
     let mut sources = Vec::<String>::new();
+    let mut main_extension = String::new();
 
     // This is where we get our source files
-    for path in utils::get_files_in_directory(Path::new("./source")) {
+    for path in utils::get_files_in_directory(source_dir) {
         let ext = path.extension().unwrap();
         if path.file_stem().unwrap().to_str() == Some("main") {
-            language = ext.to_str().unwrap().to_owned();
+            main_extension = ext.to_str().unwrap().to_owned();
             // NOTE: we don't push the main.(c/cpp) file, because its
             // automatically loaded by compile().
         } else {
@@ -65,12 +64,23 @@ pub fn build(release: Release) -> Result<(), &'static str> {
         }
     }
 
-    // We only support ".c", ".cpp" extensions (besides custom)
-    match language.as_str() {
-        "c" => compile(project, release, sources, Language::C),
-        "cpp" => compile(project, release, sources, Language::Cpp),
-        _ => return Err("Unknown sources. If you're using a custom build, please use Python."),
+    let language: Language;
+    match main_extension.as_str() {
+        "c" => language = Language::C,
+        
+        "cc" => language = Language::Cpp,
+        "cxx" => language = Language::Cpp,
+        "cpp" => language = Language::Cpp,
+
+        _ => return Err("Filetype of main in ./source/ does not match C or C++."),
     }
+
+    compile_gcc(project, CompilerOptions {
+        release: release,
+        sources: sources,
+        language: language,
+    });
+    
     Ok(())
 }
 pub enum Language {
@@ -78,16 +88,16 @@ pub enum Language {
     Cpp,
 }
 
-#[derive(PartialEq)]
-/// For easily making new Release options.
-pub enum Release {
-    Release,
-    Debug,
+/// A high-level interface for compiler options.
+pub struct CompilerOptions {
+    pub release: bool,
+    pub sources: Vec<String>,
+    pub language: Language,
 }
 
-fn compile(project: Project, release: Release, sources: Vec<String>, language: Language) {
+fn compile_gcc(project: Project, compiler_options: CompilerOptions) {
     let mut command = String::new();
-    match language {
+    match compiler_options.language {
         Language::C => {
             // Compiler
             command.push_str("gcc");
@@ -100,27 +110,26 @@ fn compile(project: Project, release: Release, sources: Vec<String>, language: L
         },
     }
 
-    for source in sources {
+    for source in compiler_options.sources {
         command.push_str(format!(" {}", source).as_str());
     }
 
     if cfg!(target_os = "windows") {
-        if release == Release::Debug {
-            command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
-        } else {
+        if compiler_options.release {
             command.push_str(format!(" -o ./target/release/{}.exe", project.package.name).as_str());
+        } else {
+            command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
         }
     } else {
-        if release == Release::Debug {
-            command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
-        } else {
+        if compiler_options.release {
             command.push_str(format!(" -o ./target/release/{}", project.package.name).as_str());
+        } else {
+            command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
         }
     }
 
-    match release {
-        Release::Release => command.push_str(" -O3"),
-        _ => {},
+    if compiler_options.release {
+        command.push_str(" -O3");
     }
 
     // All warnings
@@ -133,4 +142,8 @@ fn compile(project: Project, release: Release, sources: Vec<String>, language: L
         Err(e) => println!("{}", e),
         _ => {}
     }
+}
+
+fn compile_clang(project: Project, compiler_options: CompilerOptions) {
+    unimplemented!();
 }

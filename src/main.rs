@@ -11,7 +11,6 @@ mod utils;
 
 use structopt::StructOpt;
 use project::{Project, Target};
-use build::Release;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
@@ -55,14 +54,7 @@ fn main() {
             }
         },
         Options::Build{release} => {
-
-            let build = if release {
-                build::build(Release::Release)
-            } else {
-                build::build(Release::Debug)
-            };
-
-            match build {
+            match build::build(release) {
                 Err(e) => {
                     eprintln!("{}", e);
                     return;
@@ -88,7 +80,7 @@ fn main() {
             };
 
             // Build the program in debug mode
-            match build::build(Release::Debug) {
+            match build::build(false) {
                 Err(e) => {
                     eprintln!("{}", e);
                     return;
