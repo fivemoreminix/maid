@@ -6,7 +6,7 @@ use utils;
 
 pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
 
-    let project = Project::get(".")?;
+    let project = Project::get(Path::new("."))?;
 
     // Python, like the other (future) supported scripting languages,
     // is used to custom build. This enables anyone to make any
@@ -161,16 +161,16 @@ fn compile_gnu(project: Project, compiler_options: CompilerOptions) {
         eprintln!("{}", command);
     }
 
-    println!("Compiling {} v{} with GNU", project.package.name, project.package.version);
+    println!("\tCompiling {} v{} with GNU", project.package.name, project.package.version);
     match utils::shell_command(command) {
         Err(e) => println!("{}", e),
         _ => {}
     }
 
     if compiler_options.release {
-        println!("Finished release [optimized max]");
+        println!("\tFinished release [optimized max]");
     } else {
-        println!("Finished debug [unoptimized + debuginfo]");
+        println!("\tFinished debug [unoptimized + debuginfo]");
     }
 }
 

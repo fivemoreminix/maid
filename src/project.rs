@@ -76,10 +76,10 @@ int main(int argc, char **argv)
         Ok(project)
     }
     /// Gets the Project in the directory given
-    pub fn get(dir: &str) -> Result<Project, &'static str> {
+    pub fn get(dir: &Path) -> Result<Project, &'static str> {
         // Open the project file
         let mut project_file: File;
-        match File::open(Path::new(dir).join("Maid.toml")) {
+        match File::open(dir.join("Maid.toml")) {
             Ok(val) => project_file = val,
             Err(_) => return Err("There is no Maid.toml file in the current directory."),
         }

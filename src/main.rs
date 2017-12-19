@@ -12,6 +12,7 @@ mod user;
 
 use structopt::StructOpt;
 use project::{Project, Target};
+use std::path::Path;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
@@ -70,7 +71,7 @@ fn main() {
         Options::Run{arguments} => {
             // Get the project file
             let project: Project;
-            match Project::get(".") {
+            match Project::get(Path::new(".")) {
                 Ok(val) => project = val,
                 Err(e) => {
                     eprintln!("{}", e);
