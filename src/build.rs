@@ -1,7 +1,7 @@
-use std::fs::{self, DirBuilder};
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::fs::DirBuilder;
+use std::path::Path;
 use project::{Project, Target};
+use utils;
 
 pub fn build(release: Release) -> Result<(), &'static str> {
 
@@ -13,21 +13,7 @@ pub fn build(release: Release) -> Result<(), &'static str> {
     if project.package.target == Target::Python {
         if Path::new("./build.py").exists() {
             // Execute the python file
-            let mut child = if cfg!(target_os = "windows") {
-                Command::new("cmd")
-                    .arg("/C")
-                    .arg("python .\\build.py")
-                    .spawn()
-                    .expect("execute build.py")
-            } else {
-                Command::new("sh")
-                    .arg("-c")
-                    .arg("python ./build.py")
-                    .spawn()
-                    .expect("execute build.py")
-            };
-            // Wait for the Python program to finish
-            child.wait().unwrap();
+            utils::shell_command(String::from("python ./build.py")).expect("execute build.py");
 
             println!("Finished");
         } else {
@@ -36,25 +22,11 @@ pub fn build(release: Release) -> Result<(), &'static str> {
         return Ok(());
     }
 
+    // If this project has a build.py file but does not specifically have
+    // Python as its target configuration, we just execute the file and continue
+    // building.
     if Path::new("./build.py").exists() {
-        // If this project has a build.py file but does not specifically have
-        // Python as its target configuration, we just execute the file and continue
-        // building.
-        let mut child = if cfg!(target_os = "windows") {
-            Command::new("cmd")
-                .arg("/C")
-                .arg("python .\\build.py")
-                .spawn()
-                .expect("execute build.py")
-        } else {
-            Command::new("sh")
-                .arg("-c")
-                .arg("python ./build.py")
-                .spawn()
-                .expect("execute build.py")
-        };
-        // Wait for the Python program to finish before continuing
-        child.wait().unwrap();
+        utils::shell_command(String::from("python ./build.py")).expect("execute build.py");
     }
 
     let mut dir_builder = DirBuilder::new();
@@ -78,7 +50,7 @@ pub fn build(release: Release) -> Result<(), &'static str> {
     let mut sources = Vec::<String>::new();
 
     // This is where we get our source files
-    for path in get_files_in_directory(Path::new("./source")) {
+    for path in utils::get_files_in_directory(Path::new("./source")) {
         let ext = path.extension().unwrap();
         if path.file_stem().unwrap().to_str() == Some("main") {
             language = ext.to_str().unwrap().to_owned();
@@ -101,70 +73,6 @@ pub fn build(release: Release) -> Result<(), &'static str> {
     }
     Ok(())
 }
-
-fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {
-    // It must be a directory
-    assert!(directory.is_dir());
-
-    let mut files = Vec::<PathBuf>::new();
-
-    // We will get a list of entires in the directory
-    for entry in fs::read_dir(directory).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        if path.is_dir() {
-            // What do we do with a directory?
-        } else {
-            // It's a file, so we add it
-            files.push(path);
-        }
-    }
-    files
-}
-
-/// Executes a shell command in the background
-pub fn shell_command(command: String) -> Result<(), ::std::io::Error> {
-    // Turn the String into a Vec<String>
-    if cfg!(target_os = "windows") {
-        let vector: Vec<String> = windows_path(command).split_whitespace().map(|s| s.to_owned()).collect();
-
-        let mut status = Command::new("cmd")
-            .arg("/C")
-            .args(vector.as_slice())
-            .spawn()?;
-        status.wait().unwrap();
-        Ok(())
-    } else {
-        let vector: Vec<String> = command.split_whitespace().map(|s| s.to_owned()).collect();
-
-        let mut status = Command::new("sh")
-            .arg("-c")
-            .args(vector.as_slice())
-            .spawn()?;
-        status.wait().unwrap();
-        Ok(())
-    }
-}
-
-/// Takes a String and turns all occurrences of '/' into '\'.
-pub fn windows_path(path: String) -> String {
-    // Create an iterator over the characters in the path
-    let chars = path.chars();
-    // Make an empty String
-    let mut new_path = String::new();
-    // Iterate over every character in the path
-    for c in chars {
-        if c == '/' {
-            // If a character is a forward slash, push the Windows version
-            new_path.push('\\');
-        } else {
-            // If it's not a forward slash, just push the character
-            new_path.push(c);
-        }
-    }
-    new_path
-}
-
 pub enum Language {
     C,
     Cpp,
@@ -179,7 +87,6 @@ pub enum Release {
 
 fn compile(project: Project, release: Release, sources: Vec<String>, language: Language) {
     let mut command = String::new();
-    // TODO: push compiler name depending on choice
     match language {
         Language::C => {
             // Compiler
@@ -213,10 +120,7 @@ fn compile(project: Project, release: Release, sources: Vec<String>, language: L
 
     match release {
         Release::Release => command.push_str(" -O3"),
-        Release::Debug => {
-            // Debugging optimization
-            command.push_str(" -Og");
-        }
+        _ => {},
     }
 
     // All warnings
@@ -225,7 +129,7 @@ fn compile(project: Project, release: Release, sources: Vec<String>, language: L
     // Preprocessor defines
     command.push_str(format!(" -D PACKAGE_NAME=\"{}\" -D PACKAGE_VERSION=\"{}\"", project.package.name, project.package.version).as_str());
 
-    match shell_command(command) {
+    match utils::shell_command(command) {
         Err(e) => println!("{}", e),
         _ => {}
     }

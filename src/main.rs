@@ -7,11 +7,11 @@ extern crate toml;
 
 mod build;
 mod project;
+mod utils;
 
 use structopt::StructOpt;
 use project::{Project, Target};
 use build::Release;
-use std::process::Command;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
@@ -44,12 +44,12 @@ fn main() {
         Options::New{name, lib} => {
             if lib {
                 match Project::new(name, project::Target::Static) {
-                    Err(e) => println!("{}", e),
+                    Err(e) => eprintln!("{}", e),
                     _ => {},
                 }
             } else {
                 match Project::new(name, project::Target::Executable) {
-                    Err(e) => println!("{}", e),
+                    Err(e) => eprintln!("{}", e),
                     _ => {},
                 }
             }
@@ -82,7 +82,7 @@ fn main() {
             }
 
             // Unwrap the program arguments
-            let program_arguments = match arguments {
+            let arguments = match arguments {
                 Some(v) => v,
                 None => String::from(""),
             };
@@ -97,8 +97,8 @@ fn main() {
             }
 
             // Prevent them from being able to run the program if it is not executable
-            if project.package.target != project::Target::Executable && !project.is_custom() {
-                eprintln!(
+            if project.package.target != project::Target::Executable || project.is_custom() {
+                println!(
 "Oops!\nYour project file shows that this binary aims to be {:?}, but I can't execute those.\n{}{}",
 project.package.target,
 "(To be able to execute your program, please change the configuration \"target\" to equal",
@@ -107,24 +107,10 @@ project.package.target,
                 return;
             } else if project.package.target == Target::Executable {
                 // Execute the generated binary
-                let mut child = if cfg!(target_os = "windows") {
-                    Command::new("cmd")
-                        .arg("/C")
-                        .arg(format!(".\\target\\debug\\{}.exe", project.package.name))
-                        .arg(program_arguments)
-                        .spawn()
-                        .expect("execute built program at ./target/debug/")
-                } else {
-                    Command::new("sh")
-                        .arg("-c")
-                        .arg(format!("./target/debug/{}", project.package.name))
-                        .arg(program_arguments)
-                        .spawn()
-                        .expect("execute built program at ./target/debug/")
-                };
+                let child = utils::shell_command(format!("./target/debug/{}.exe {}", project.package.name, arguments))
+                    .expect("execute built program in ./target/debug/");
 
-                let status = child.wait().unwrap();
-                match status.code() {
+                match child.code() {
                     Some(code) => println!("Finished with code: {}", code),
                     // If, by chance, the program we executed does not return an error code,
                     // we just report that it has finished.
