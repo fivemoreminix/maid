@@ -1,5 +1,6 @@
 use std::fs::{File, DirBuilder};
 use std::io::{Write, Read};
+use std::path::Path;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
@@ -26,7 +27,12 @@ pub enum Target {
 
 impl Project {
     /// Creates a new project and returns its properties.
-    pub fn new(name: String, target: Target) -> Project {
+    pub fn new(name: String, target: Target) -> Result<Project, &'static str> {
+        // Check if there is already a folder with the same name as the project
+        if Path::new(format!("./{}", name).as_str()).is_dir() {
+            return Err("A folder with the same name already exists.");
+        }
+
         // Create the project directory
         let mut dir_builder = DirBuilder::new();
         dir_builder.recursive(true);
@@ -67,7 +73,7 @@ int main(int argc, char **argv)
         // Sync IO operations for the new file before continuing
         project_file.sync_all().unwrap();
 
-        project
+        Ok(project)
     }
     /// Gets the Project in the directory given (no "/" at the end)
     pub fn get(dir: &str) -> Result<Project, &'static str> {

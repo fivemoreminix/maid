@@ -43,9 +43,15 @@ fn main() {
     match options {
         Options::New{name, lib} => {
             if lib {
-                Project::new(name, project::Target::Static);
+                match Project::new(name, project::Target::Static) {
+                    Err(e) => println!("{}", e),
+                    _ => {},
+                }
             } else {
-                Project::new(name, project::Target::Executable);
+                match Project::new(name, project::Target::Executable) {
+                    Err(e) => println!("{}", e),
+                    _ => {},
+                }
             }
         },
         Options::Build{release} => {
@@ -72,7 +78,7 @@ fn main() {
                 Err(e) => {
                     eprintln!("{}", e);
                     return;
-                }
+                },
             }
 
             // Unwrap the program arguments
@@ -87,7 +93,7 @@ fn main() {
                     eprintln!("{}", e);
                     return;
                 },
-                _ => {}
+                _ => {},
             }
 
             // Prevent them from being able to run the program if it is not executable
