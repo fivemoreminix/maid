@@ -7,10 +7,10 @@ When I met [Cargo](https://github.com/rust-lang/cargo), I knew that I wanted the
 
 Instead, I tried to forget all the things that were going to hold me back, and just started making *something that could compile the code you give it, manage it, and enable you to work with a high-level interface over your compiler.* It definitely makes it easier to start projects, and I'm starting to enjoy C and C++ development more.
 # Screenshots
-* ![Preprocessor](https://github.com/lovesanxx/maid/tree/master/etc/images/preprocessor.png "Preprocessor Example")
-* ![C and Header File Compilation](https://github.com/lovesanxx/maid/tree/master/etc/images/c_and_headers.png "C and Headers")
-* ![Python Build Scripts](https://github.com/lovesanxx/maid/tree/master/etc/images/python_build_scripts.png "Python Build Scripts")
-* ![Python as a Target](https://github.com/lovesanxx/maid/tree/master/etc/images/python_as_a_target.png "Python as a Target")
+![Preprocessor](/etc/images/preprocessor.png "Preprocessor Example")
+![C and Header File Compilation](/etc/images/c_and_headers.png "C and Headers")
+![Python Build Scripts](/etc/images/python_build_scripts.png "Python Build Scripts")
+![Python as a Target](/etc/images/python_as_a_target.png "Python as a Target")
 
 # FAQ
 ## Why so many comments in the code?
