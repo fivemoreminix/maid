@@ -91,9 +91,15 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         eprintln!("{:?}", compiler_options);
     }
 
-    match Config::get()?.preferred_compiler {
-        Compiler::GNU => compile_gnu(project, compiler_options),
-        Compiler::Clang => compile_clang(project, compiler_options),
+    match project.build {
+        Some(build) => match build.preferred_compiler {
+            Compiler::GNU => compile_gnu(project, compiler_options),
+            Compiler::Clang => compile_clang(project, compiler_options),
+        },
+        None => match Config::get()?.preferred_compiler {
+            Compiler::GNU => compile_gnu(project, compiler_options),
+            Compiler::Clang => compile_clang(project, compiler_options),
+        },
     }
 
     Ok(())

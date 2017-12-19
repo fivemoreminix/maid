@@ -8,7 +8,7 @@ pub struct Config {
     pub preferred_compiler: Compiler,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum Compiler {
     GNU,
     Clang,
