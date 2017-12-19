@@ -6,10 +6,19 @@ I was never fond of writing C or C++. I liked the language, but it all just felt
 When I met [Cargo](https://github.com/rust-lang/cargo), I knew that I wanted the same for C++. I liked the simple configuration file and not having to deal with anything other than writing my code. It's just a few things that would make it difficult to create a Cargo-like software for C/C++: dependencies come in many forms, I don't have a lot of access to the compiler, and I've honestly never made anything like this before.
 
 Instead, I tried to forget all the things that were going to hold me back, and just started making *something that could compile the code you give it, manage it, and enable you to work with a high-level interface over your compiler.* It definitely makes it easier to start projects, and I'm starting to enjoy C and C++ development more.
-# Screenshots
+# Examples
+To be able to automatically display the name and version of your program should be possible without hardcoding it into your program. We accomplish this with preprocessor defines.
+
+*The only defines are `PACKAGE_NAME` and `PACKAGE_VERSION`.*
 ![Preprocessor](/etc/images/preprocessor.png "Preprocessor Example")
+
+It should be obvious to include headers. They're also not tracked by Maid so you can just put your header files in your `/source` folder.
 ![C and Header File Compilation](/etc/images/c_and_headers.png "C and Headers")
+
+This currently stands as a possible security vulnerability for downloaded packages in the future, but for now it seems fine. You can execute a python file before the compilation of your program if you need to do any pre-calculation or checks.
 ![Python Build Scripts](/etc/images/python_build_scripts.png "Python Build Scripts")
+
+You can also support any language you'd like with Python. As of now, there's actually no real reason to do this, but I'll find something to use this in the next few updates.
 ![Python as a Target](/etc/images/python_as_a_target.png "Python as a Target")
 
 # FAQ
