@@ -1,6 +1,7 @@
 use std::fs::DirBuilder;
 use std::path::Path;
 use project::{Project, Target};
+use user::{Compiler, Config};
 use utils;
 
 pub fn build(release: bool) -> Result<(), &'static str> {
@@ -64,6 +65,7 @@ pub fn build(release: bool) -> Result<(), &'static str> {
         }
     }
 
+    // Determine the main language used in the project
     let language: Language;
     match main_extension.as_str() {
         "c" => language = Language::C,
@@ -75,12 +77,17 @@ pub fn build(release: bool) -> Result<(), &'static str> {
         _ => return Err("Filetype of main in ./source/ does not match C or C++."),
     }
 
-    compile_gcc(project, CompilerOptions {
+    let compiler_options = CompilerOptions {
         release: release,
         sources: sources,
         language: language,
-    });
-    
+    };
+
+    match Config::get()?.preferred_compiler {
+        Compiler::GNU => compile_gnu(project, compiler_options),
+        Compiler::Clang => compile_clang(project, compiler_options),
+    }
+
     Ok(())
 }
 pub enum Language {
@@ -95,7 +102,7 @@ pub struct CompilerOptions {
     pub language: Language,
 }
 
-fn compile_gcc(project: Project, compiler_options: CompilerOptions) {
+fn compile_gnu(project: Project, compiler_options: CompilerOptions) {
     let mut command = String::new();
     match compiler_options.language {
         Language::C => {

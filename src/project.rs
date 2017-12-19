@@ -66,7 +66,7 @@ int main(int argc, char **argv)
         };
 
         // Serialize the project into TOML
-        let toml: String = ::toml::to_string(&project).unwrap();
+        let toml = ::toml::to_string(&project).unwrap();
 
         // Write the project to the new project file
         write!(project_file, "{}", toml).unwrap();
@@ -75,14 +75,11 @@ int main(int argc, char **argv)
 
         Ok(project)
     }
-    /// Gets the Project in the directory given (no "/" at the end)
+    /// Gets the Project in the directory given
     pub fn get(dir: &str) -> Result<Project, &'static str> {
-        // Ensure the given directory doesn't end with a "/"
-        assert!(!dir.ends_with("/"));
-
         // Open the project file
         let mut project_file: File;
-        match File::open(format!("{}/Maid.toml", dir)) {
+        match File::open(Path::new(dir).join("Maid.toml")) {
             Ok(val) => project_file = val,
             Err(_) => return Err("There is no Maid.toml file in the current directory."),
         }

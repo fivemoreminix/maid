@@ -8,6 +8,7 @@ extern crate toml;
 mod build;
 mod project;
 mod utils;
+mod user;
 
 use structopt::StructOpt;
 use project::{Project, Target};
