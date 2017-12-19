@@ -230,5 +230,3 @@ fn compile(project: Project, release: Release, sources: Vec<String>, language: L
         _ => {}
     }
 }
-
-// Asmodeus of the Programming Discord server is sexy
