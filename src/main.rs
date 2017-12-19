@@ -26,6 +26,10 @@ enum Options {
     },
     #[structopt(name = "build")]
     Build {
+        #[structopt(short = "v", long = "verbose")]
+        /// Gives you more information as to what is happening
+        verbose: bool,
+
         #[structopt(short = "r", long = "release")]
         /// Compiles with all optimizations
         release: bool,
@@ -54,8 +58,8 @@ fn main() {
                 }
             }
         },
-        Options::Build{release} => {
-            match build::build(release) {
+        Options::Build{verbose, release} => {
+            match build::build(release, verbose) {
                 Err(e) => {
                     eprintln!("{}", e);
                     return;
@@ -80,8 +84,8 @@ fn main() {
                 None => String::from(""),
             };
 
-            // Build the program in debug mode
-            match build::build(false) {
+            // Build the program in debug mode, without verbosity
+            match build::build(false, false) {
                 Err(e) => {
                     eprintln!("{}", e);
                     return;
@@ -104,10 +108,10 @@ project.package.target,
                     .expect("execute built program in ./target/debug/");
 
                 match child.code() {
-                    Some(code) => println!("Finished with code: {}", code),
-                    // If, by chance, the program we executed does not return an error code,
-                    // we just report that it has finished.
-                    None => println!("Finished"),
+                    Some(code) => if code != 0 {
+                        println!("Exited with code: {}", code)
+                    },
+                    None => {},
                 }
             }
         },

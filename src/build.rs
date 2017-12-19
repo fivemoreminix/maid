@@ -4,7 +4,7 @@ use project::{Project, Target};
 use user::{Compiler, Config};
 use utils;
 
-pub fn build(release: bool) -> Result<(), &'static str> {
+pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
 
     let project = Project::get(".")?;
 
@@ -27,6 +27,9 @@ pub fn build(release: bool) -> Result<(), &'static str> {
     // Python as its target configuration, we just execute the file and continue
     // building.
     if Path::new("./build.py").exists() {
+        if verbose {
+            eprintln!("Executing build.py...");
+        }
         utils::shell_command(String::from("python ./build.py")).expect("execute build.py");
     }
 
@@ -79,9 +82,14 @@ pub fn build(release: bool) -> Result<(), &'static str> {
 
     let compiler_options = CompilerOptions {
         release: release,
+        verbose: verbose,
         sources: sources,
         language: language,
     };
+
+    if verbose {
+        eprintln!("{:?}", compiler_options);
+    }
 
     match Config::get()?.preferred_compiler {
         Compiler::GNU => compile_gnu(project, compiler_options),
@@ -90,14 +98,18 @@ pub fn build(release: bool) -> Result<(), &'static str> {
 
     Ok(())
 }
+
+#[derive(Debug)]
 pub enum Language {
     C,
     Cpp,
 }
 
+#[derive(Debug)]
 /// A high-level interface for compiler options.
 pub struct CompilerOptions {
     pub release: bool,
+    pub verbose: bool,
     pub sources: Vec<String>,
     pub language: Language,
 }
@@ -145,9 +157,20 @@ fn compile_gnu(project: Project, compiler_options: CompilerOptions) {
     // Preprocessor defines
     command.push_str(format!(" -D PACKAGE_NAME=\"{}\" -D PACKAGE_VERSION=\"{}\"", project.package.name, project.package.version).as_str());
 
+    if compiler_options.verbose {
+        eprintln!("{}", command);
+    }
+
+    println!("Compiling {} v{} with GNU", project.package.name, project.package.version);
     match utils::shell_command(command) {
         Err(e) => println!("{}", e),
         _ => {}
+    }
+
+    if compiler_options.release {
+        println!("Finished release [optimized max]");
+    } else {
+        println!("Finished debug [unoptimized + debuginfo]");
     }
 }
 
