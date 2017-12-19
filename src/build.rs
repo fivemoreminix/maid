@@ -174,12 +174,68 @@ fn compile_gnu(project: Project, compiler_options: CompilerOptions) {
     }
 
     if compiler_options.release {
-        println!("\tFinished release [optimized max]");
+        println!("\tFinished release [optimized]");
     } else {
         println!("\tFinished debug [unoptimized + debuginfo]");
     }
 }
 
 fn compile_clang(project: Project, compiler_options: CompilerOptions) {
-    unimplemented!();
+    let mut command = String::new();
+    match compiler_options.language {
+        Language::C => {
+            // Compiler
+            command.push_str("clang");
+            command.push_str(" ./source/main.c");
+        },
+        Language::Cpp => {
+            // Compiler
+            command.push_str("clang++");
+            command.push_str(" ./source/main.cpp");
+        },
+    }
+
+    for source in compiler_options.sources {
+        command.push_str(format!(" {}", source).as_str());
+    }
+
+    if cfg!(target_os = "windows") {
+        if compiler_options.release {
+            command.push_str(format!(" -o ./target/release/{}.exe", project.package.name).as_str());
+        } else {
+            command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
+        }
+    } else {
+        if compiler_options.release {
+            command.push_str(format!(" -o ./target/release/{}", project.package.name).as_str());
+        } else {
+            command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+        }
+    }
+
+    if compiler_options.release {
+        command.push_str(" -O3");
+    }
+
+    // All warnings
+    command.push_str(" -w");
+
+    // Preprocessor defines
+    command.push_str(format!(" -DPACKAGE_NAME=\"{}\" -DPACKAGE_VERSION=\"{}\"", project.package.name, project.package.version).as_str());
+
+    if compiler_options.verbose {
+        eprintln!("{}", command);
+    }
+
+    println!("\tCompiling {} v{} with Clang", project.package.name, project.package.version);
+    match utils::shell_command(command) {
+        Err(e) => println!("{}", e),
+        _ => {}
+    }
+
+    if compiler_options.release {
+        println!("\tFinished release [optimized]");
+    } else {
+        println!("\tFinished debug [unoptimized + debuginfo]");
+    }
 }
