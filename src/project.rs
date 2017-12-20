@@ -5,7 +5,8 @@ use std::path::Path;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
     pub package: Package,
-    pub build: Option<Build>,
+    pub build: Build,
+    pub dependencies: Dependencies,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -16,9 +17,18 @@ pub struct Package {
     pub target: Target,
 }
 
-#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Build {
-    pub preferred_compiler: ::user::Compiler,
+    pub preferred_compiler: Option<::user::Compiler>,
+    pub gnu_options: Vec<String>,
+    pub clang_options: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Dependencies {
+    pub header_search_directories: Vec<String>,
+    pub linker_search_directories: Vec<String>,
+    pub link_libraries: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -69,7 +79,16 @@ int main(int argc, char **argv)
                 authors: vec!(String::from("Johnny Appleseed")),
                 target: target,
             },
-            build: None,
+            build: Build {
+                preferred_compiler: None,
+                gnu_options: vec!(),
+                clang_options: vec!(),
+            },
+            dependencies: Dependencies {
+                header_search_directories: vec!(),
+                linker_search_directories: vec!(),
+                link_libraries: vec!(),
+            }
         };
 
         // Serialize the project into TOML
