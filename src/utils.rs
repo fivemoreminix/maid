@@ -25,21 +25,38 @@ pub fn windows_path(path: String) -> String {
     new_path
 }
 
+pub fn print_error_str(error: &str) {
+    eprintln!("\nerror: {}", error);
+}
+
+pub fn print_error(error: String) {
+    eprintln!("\nerror: {}", error);
+}
+
 /// Executes a shell command in the background
-pub fn shell_command(command: String) -> Result<ExitStatus, ::std::io::Error> {
-    if cfg!(target_os = "windows") {
-        let mut status = Command::new("cmd")
+pub fn shell_command(command: String, catch_exit_codes: bool) -> Result<ExitStatus, ::std::io::Error> {
+    let mut status = if cfg!(target_os = "windows") {
+        Command::new("cmd")
             .arg("/C")
             .args(string_to_vec(windows_path(command)).as_slice())
-            .spawn()?;
-        Ok(status.wait().unwrap())
+            .spawn()?
+        
     } else {
-        let mut status = Command::new("sh")
+        Command::new("sh")
             .arg("-c")
             .args(string_to_vec(command).as_slice())
-            .spawn()?;
-        Ok(status.wait().unwrap())
+            .spawn()?
+    };
+
+    let result = status.wait().unwrap();
+
+    if catch_exit_codes && result.code().unwrap() != 0 {
+        let code = result.code().unwrap();
+        print_error(format!("process exited with code: {}", code));
+        return Err(::std::io::Error::new(::std::io::ErrorKind::Other, format!("process exited with code: {}", code)));
     }
+
+    Ok(result)
 }
 
 pub fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {

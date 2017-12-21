@@ -13,6 +13,7 @@ mod user;
 use structopt::StructOpt;
 use project::{Project, Target};
 use std::path::Path;
+use utils::print_error_str;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
@@ -49,12 +50,12 @@ fn main() {
         Options::New{name, lib} => {
             if lib {
                 match Project::new(name, project::Target::Static) {
-                    Err(e) => eprintln!("{}", e),
+                    Err(e) => print_error_str(e),
                     _ => {},
                 }
             } else {
                 match Project::new(name, project::Target::Executable) {
-                    Err(e) => eprintln!("{}", e),
+                    Err(e) => print_error_str(e),
                     _ => {},
                 }
             }
@@ -62,7 +63,7 @@ fn main() {
         Options::Build{verbose, release} => {
             match build::build(release, verbose) {
                 Err(e) => {
-                    eprintln!("{}", e);
+                    print_error_str(e);
                     return;
                 },
                 _ => {},
@@ -74,7 +75,7 @@ fn main() {
             match Project::get(Path::new(".")) {
                 Ok(val) => project = val,
                 Err(e) => {
-                    eprintln!("{}", e);
+                    print_error_str(e);
                     return;
                 },
             }
@@ -88,7 +89,7 @@ fn main() {
             // Build the program in debug mode, without verbosity
             match build::build(false, false) {
                 Err(e) => {
-                    eprintln!("{}", e);
+                    print_error_str(e);
                     return;
                 },
                 _ => {},
@@ -105,7 +106,7 @@ project.package.target,
                 return;
             } else if project.package.target == Target::Executable {
                 // Execute the generated binary
-                let child = utils::shell_command(format!("./target/debug/{}.exe {}", project.package.name, arguments))
+                let child = utils::shell_command(format!("./target/debug/{}.exe {}", project.package.name, arguments), false)
                     .expect("execute built program in ./target/debug/");
 
                 match child.code() {

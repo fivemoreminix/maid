@@ -19,7 +19,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
     if project.package.target == Target::Python {
         if Path::new("./build.py").exists() {
             // Execute the python file
-            utils::shell_command(String::from("python ./build.py")).expect("execute build.py");
+            utils::shell_command(String::from("python ./build.py"), true).expect("execute build.py");
 
             println!("Finished");
         } else {
@@ -35,7 +35,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         if verbose {
             eprintln!("Executing build.py...");
         }
-        utils::shell_command(String::from("python ./build.py")).expect("execute build.py");
+        utils::shell_command(String::from("python ./build.py"), true).expect("execute build.py");
     }
 
     let mut dir_builder = DirBuilder::new();
@@ -98,12 +98,12 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
     // compiler specified in the user's config file.
     match project.build.preferred_compiler {
         Some(compiler) => match compiler {
-            Compiler::GNU => compilers::compile_gnu(project, compiler_options),
-            Compiler::Clang => compilers::compile_clang(project, compiler_options),
+            Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
+            Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
         },
         None => match Config::get()?.preferred_compiler {
-            Compiler::GNU => compilers::compile_gnu(project, compiler_options),
-            Compiler::Clang => compilers::compile_clang(project, compiler_options),
+            Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
+            Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
         },
     }
 

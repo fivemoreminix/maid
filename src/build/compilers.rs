@@ -4,7 +4,7 @@ use super::{CompilerOptions, Language};
 use project::Project;
 use utils;
 
-pub fn compile_gnu(project: Project, compiler_options: CompilerOptions) {
+pub fn compile_gnu(project: Project, compiler_options: CompilerOptions) -> Result<(), &'static str> {
     let mut command = String::new();
     match compiler_options.language {
         Language::C => {
@@ -80,8 +80,8 @@ pub fn compile_gnu(project: Project, compiler_options: CompilerOptions) {
     }
 
     println!("\tCompiling {} v{} with GNU", project.package.name, project.package.version);
-    match utils::shell_command(command) {
-        Err(e) => println!("{}", e),
+    match utils::shell_command(command, true) {
+        Err(_) => return Err("compilation terminated due to previous error(s)"),
         _ => {}
     }
 
@@ -90,9 +90,11 @@ pub fn compile_gnu(project: Project, compiler_options: CompilerOptions) {
     } else {
         println!("\tFinished debug [unoptimized]");
     }
+
+    Ok(())
 }
 
-pub fn compile_clang(project: Project, compiler_options: CompilerOptions) {
+pub fn compile_clang(project: Project, compiler_options: CompilerOptions) -> Result<(), &'static str> {
     let mut command = String::new();
     match compiler_options.language {
         Language::C => {
@@ -163,8 +165,8 @@ pub fn compile_clang(project: Project, compiler_options: CompilerOptions) {
     }
 
     println!("\tCompiling {} v{} with Clang", project.package.name, project.package.version);
-    match utils::shell_command(command) {
-        Err(e) => println!("{}", e),
+    match utils::shell_command(command, true) {
+        Err(_) => return Err("compilation terminated due to previous error(s)"),
         _ => {}
     }
 
@@ -173,4 +175,6 @@ pub fn compile_clang(project: Project, compiler_options: CompilerOptions) {
     } else {
         println!("\tFinished debug [unoptimized]");
     }
+
+    Ok(())
 }
