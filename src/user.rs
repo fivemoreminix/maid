@@ -32,7 +32,7 @@ impl Config {
             let mut file: File;
             match File::open(path) {
                 Ok(f) => file = f,
-                Err(_) => return Err("Cannot open the configuration file."),
+                Err(_) => return Err("cannot open the configuration file."),
             }
 
             // Read the contents
@@ -55,7 +55,7 @@ impl Config {
         let mut config_file: File;
         match File::create(path) {
             Ok(f) => config_file = f,
-            Err(_) => return Err("Cannot create configuration file."),
+            Err(_) => return Err("cannot create configuration file."),
         }
 
         // Initialize the configuration

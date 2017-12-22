@@ -57,7 +57,7 @@ fn validate_project_name(name: String) -> Option<String> {
                 break;
             }
         }
-        
+
         // If the character has been matched with a `bad_char`,
         // then we don't push it.
         if !is_bad {
@@ -79,12 +79,12 @@ impl Project {
         let name: String;
         match validate_project_name(invalidated_name) {
             Some(new) => name = new,
-            None => return Err("The given project name contained only invalid characters."),
+            None => return Err("the given project name contained only invalid characters."),
         }
 
         // Check if there is already a folder with the same name as the project
         if Path::new(format!("./{}", name).as_str()).is_dir() {
-            return Err("A folder with the same name already exists.");
+            return Err("a folder with the same name already exists.");
         }
 
         // Create the project directory
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
         let mut project_file: File;
         match File::open(dir.join("Maid.toml")) {
             Ok(val) => project_file = val,
-            Err(_) => return Err("There is no Maid.toml file in the current directory."),
+            Err(_) => return Err("there is no Maid.toml file in the current directory."),
         }
 
         let mut contents = String::new();
