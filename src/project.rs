@@ -41,9 +41,47 @@ pub enum Target {
     Python,
 }
 
+static BAD_CHARS: [char; 22] = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '/', '\\', ':', ';', '|', '<', '>', '?'];
+
+fn validate_project_name(name: String) -> Option<String> {
+    let mut valid_name = String::new();
+    let chars = name.chars();
+    // Iterate over every character in `name`,
+    // if the character matches ANY of the `BAD_CHARS`,
+    // we ignore it, otherwise we push it onto `valid_name`.
+    for c in chars {
+        let mut is_bad = false;
+        for bad_char in BAD_CHARS.iter() {
+            if c == *bad_char {
+                is_bad = true;
+                break;
+            }
+        }
+        
+        // If the character has been matched with a `bad_char`,
+        // then we don't push it.
+        if !is_bad {
+            valid_name.push(c);
+        }
+    }
+
+    // Return the correct Option for the String we validated
+    if valid_name.is_empty() {
+        None
+    } else {
+        Some(valid_name)
+    }
+}
+
 impl Project {
     /// Creates a new project and returns its properties.
-    pub fn new(name: String, target: Target) -> Result<Project, &'static str> {
+    pub fn new(invalidated_name: String, target: Target) -> Result<Project, &'static str> {
+        let name: String;
+        match validate_project_name(invalidated_name) {
+            Some(new) => name = new,
+            None => return Err("The given project name contained only invalid characters."),
+        }
+
         // Check if there is already a folder with the same name as the project
         if Path::new(format!("./{}", name).as_str()).is_dir() {
             return Err("A folder with the same name already exists.");
