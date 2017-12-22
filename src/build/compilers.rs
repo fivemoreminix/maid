@@ -86,9 +86,9 @@ pub fn compile_gnu(project: Project, compiler_options: CompilerOptions) -> Resul
     }
 
     if compiler_options.release {
-        println!("\tFinished release [optimized]");
+        println!("\t Finished release [optimized]");
     } else {
-        println!("\tFinished debug [unoptimized]");
+        println!("\t Finished debug [unoptimized]");
     }
 
     Ok(())
@@ -171,9 +171,9 @@ pub fn compile_clang(project: Project, compiler_options: CompilerOptions) -> Res
     }
 
     if compiler_options.release {
-        println!("\tFinished release [optimized]");
+        println!("\t Finished release [optimized]");
     } else {
-        println!("\tFinished debug [unoptimized]");
+        println!("\t Finished debug [unoptimized]");
     }
 
     Ok(())

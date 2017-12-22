@@ -106,7 +106,7 @@ project.package.target,
                 // It's real ugly, but it works ¯\_(ツ)_/¯
                 return;
             } else if project.package.target == Target::Executable {
-                println!("\tRunning `{}`", project.package.name);
+                println!("\t  Running `{}`", project.package.name);
 
                 // Execute the generated binary
                 let result = if cfg!(target_os = "windows") {
