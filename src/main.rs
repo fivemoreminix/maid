@@ -14,6 +14,7 @@ use structopt::StructOpt;
 use project::{Project, Target};
 use std::path::Path;
 use utils::print_error_str;
+use std::error::Error;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
@@ -105,15 +106,25 @@ project.package.target,
                 // It's real ugly, but it works ¯\_(ツ)_/¯
                 return;
             } else if project.package.target == Target::Executable {
-                // Execute the generated binary
-                let child = utils::shell_command(format!("./target/debug/{}.exe {}", project.package.name, arguments), false)
-                    .expect("execute built program in ./target/debug/");
+                println!("\tRunning `{}`", project.package.name);
 
-                match child.code() {
-                    Some(code) => if code != 0 {
-                        println!("Exited with code: {}", code)
+                // Execute the generated binary
+                let result = if cfg!(target_os = "windows") {
+                    utils::shell_command(
+                        format!("./target/debug/{}.exe {}", project.package.name, arguments), false)
+                } else {
+                    utils::shell_command(
+                        format!("./target/debug/{} {}", project.package.name, arguments), false)
+                };
+                
+                match result {
+                    Ok(child) => match child.code() {
+                        Some(code) => if code != 0 {
+                            println!("Exited with code: {}", code)
+                        },
+                        None => {},
                     },
-                    None => {},
+                    Err(e) => print_error_str(e.description()),
                 }
             }
         },
