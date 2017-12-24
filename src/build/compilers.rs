@@ -142,6 +142,10 @@ pub fn compile_clang(project: Project, compiler_options: CompilerOptions) -> Res
         command.push_str(format!(" {}", source).as_str());
     }
 
+    if project.package.target == Target::Static {
+        unimplemented!();
+    }
+
     if cfg!(target_os = "windows") {
         if compiler_options.release {
             command.push_str(format!(" -o ./target/release/{}.exe", project.package.name).as_str());
@@ -198,6 +202,23 @@ pub fn compile_clang(project: Project, compiler_options: CompilerOptions) -> Res
         Err(_) => return Err("compilation terminated due to previous error(s)"),
         _ => {}
     }
+
+    // If we're working with a static library, we need to make an archive of the .o files
+    /*
+    if project.package.target == Target::Static {
+        if compiler_options.release {
+            if let Err(_) = utils::shell_command(format!("ar rcs ./target/release/lib{}.a ./target/release/{}.o",
+                                                         project.package.name, project.package.name), true) {
+                return Err("compilation terminated due to previous error(s)")
+            }
+        } else {
+            if let Err(_) = utils::shell_command(format!("ar rcs ./target/debug/lib{}.a ./target/debug/{}.o",
+                                                         project.package.name, project.package.name), true) {
+                return Err("compilation terminated due to previous error(s)")
+            }
+        }
+    }
+    */
 
     if compiler_options.release {
         println!("\t Finished release [optimized]");
