@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
                 name: name.to_owned(),
                 version: String::from("0.1.0"),
                 authors: vec!(String::from("Johnny Appleseed")),
-                target: target,
+                target,
             },
             build: Build {
                 preferred_compiler: None,

@@ -87,10 +87,10 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
     }
 
     let compiler_options = CompilerOptions {
-        release: release,
-        verbose: verbose,
-        sources: sources,
-        language: language,
+        release,
+        verbose,
+        sources,
+        language,
     };
 
     // If the project configuration has a preferred compiler,

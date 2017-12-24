@@ -1,7 +1,7 @@
 //! The code to implement compilers is very messy so we keep all of our compiler-specific code here.
 
 use super::{CompilerOptions, Language};
-use project::Project;
+use project::{Target, Project};
 use utils;
 
 pub fn compile_gnu(project: Project, compiler_options: CompilerOptions) -> Result<(), &'static str> {
@@ -23,17 +23,31 @@ pub fn compile_gnu(project: Project, compiler_options: CompilerOptions) -> Resul
         command.push_str(format!(" {}", source).as_str());
     }
 
-    if cfg!(target_os = "windows") {
+    if project.package.target == Target::Static {
+        command.push_str(" -c");
+    }
+
+    if project.package.target == Target::Static {
         if compiler_options.release {
-            command.push_str(format!(" -o ./target/release/{}.exe", project.package.name).as_str());
+            command.push_str(format!(" -o ./target/release/{}.o", project.package.name).as_str());
         } else {
-            command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
+            command.push_str(format!(" -o ./target/debug/{}.o", project.package.name).as_str());
         }
+    } else if project.package.target == Target::Dynamic {
+        unimplemented!();
     } else {
-        if compiler_options.release {
-            command.push_str(format!(" -o ./target/release/{}", project.package.name).as_str());
+        if cfg!(target_os = "windows") {
+            if compiler_options.release {
+                command.push_str(format!(" -o ./target/release/{}.exe", project.package.name).as_str());
+            } else {
+                command.push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
+            }
         } else {
-            command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+            if compiler_options.release {
+                command.push_str(format!(" -o ./target/release/{}", project.package.name).as_str());
+            } else {
+                command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+            }
         }
     }
 
@@ -82,7 +96,22 @@ pub fn compile_gnu(project: Project, compiler_options: CompilerOptions) -> Resul
     println!("\tCompiling {} v{} with GNU", project.package.name, project.package.version);
     match utils::shell_command(command, true) {
         Err(_) => return Err("compilation terminated due to previous error(s)"),
-        _ => {}
+        _ => {},
+    }
+
+    // If we're working with a static library, we need to make an archive of the .o files
+    if project.package.target == Target::Static {
+        if compiler_options.release {
+            if let Err(_) = utils::shell_command(format!("ar rcs ./target/release/lib{}.a ./target/release/{}.o",
+                                                         project.package.name, project.package.name), true) {
+                return Err("compilation terminated due to previous error(s)")
+            }
+        } else {
+            if let Err(_) = utils::shell_command(format!("ar rcs ./target/debug/lib{}.a ./target/debug/{}.o",
+                                                         project.package.name, project.package.name), true) {
+                return Err("compilation terminated due to previous error(s)")
+            }
+        }
     }
 
     if compiler_options.release {
