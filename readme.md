@@ -1,11 +1,13 @@
 # What is Maid?
 **Maid is a project manager for C and C++ that enables anyone to create a project and get started working, without needing to worry about IDEs, or their compiler and its hundreds of options.**
 
-I was never fond of writing C or C++. I liked the language, but it all just felt so complicated; being required to memorize tons of compiler options, CMake commands, and trying to plan ahead for users of different development environments.
+Maid creates and manages projects for you. You'll never need to touch CMake, an IDE, or even custom shell build scripts; ew. I believe you should focus most on actually writing the code than being distracted with other things.
 
-When I met [Cargo](https://github.com/rust-lang/cargo), I knew that I wanted the same for C++. I liked the simple configuration file and not having to deal with anything other than writing my code. It's just a few things that would make it difficult to create a Cargo-like software for C/C++: dependencies come in many forms, I don't have a lot of access to the compiler, and I've honestly never made anything like this before.
+Maid has commands like `build`, which gathers up all your source files, determines the language (C or C++) based on the `main.(c/cpp)` file extension, compiles all the files, and links them. In the project file, you can specify general options like the name of the project, its version, its language of choice, options for each compiler separately, linker options, and much more!
 
-Instead, I tried to forget all the things that were going to hold me back, and just started making *something that could compile the code you give it, manage it, and enable you to work with a high-level interface over your compiler.* It definitely makes it easier to start projects, and I'm starting to enjoy C and C++ development more.
+All options are high-level, meaning they are translated into the literal options for the tools Maid decides to use.
+
+Oh, and everyone gets a user config file just like how every project gets one, too. Project preferences, AKA `Maid.toml`, are dominant over user preferences. For example, a user can have a preferred compiler across all projects, but if a project requires a specific compiler, it will use the one it requires, and not the one the user prefers.
 # Examples
 To be able to automatically display the name and version of your program should be possible without hardcoding it into your program. We accomplish this with preprocessor defines.
 
