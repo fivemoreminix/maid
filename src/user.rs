@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::fs::File;
-use std::io::{Write, Read};
+use std::io::{Read, Write};
 use std::env::current_exe;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -22,7 +22,9 @@ impl Config {
         match current_exe().unwrap().parent() {
             Some(p) => path = p.to_owned(),
             // Very likely will not ever happen
-            None    => return Err("Maid is not placed in a directory, so we cannot have a user configuration file."),
+            None => return Err(
+                "Maid is not placed in a directory, so we cannot have a user configuration file.",
+            ),
         }
 
         path = path.join("Config.toml");

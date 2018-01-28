@@ -1,4 +1,4 @@
-use std::process::{ExitStatus, Command};
+use std::process::{Command, ExitStatus};
 use std::path::{Path, PathBuf};
 use std::fs;
 
@@ -34,13 +34,15 @@ pub fn print_error(error: String) {
 }
 
 /// Executes a shell command in the background
-pub fn shell_command(command: String, catch_exit_codes: bool) -> Result<ExitStatus, ::std::io::Error> {
+pub fn shell_command(
+    command: String,
+    catch_exit_codes: bool,
+) -> Result<ExitStatus, ::std::io::Error> {
     let mut status = if cfg!(target_os = "windows") {
         Command::new("cmd")
             .arg("/C")
             .args(string_to_vec(windows_path(command)).as_slice())
             .spawn()?
-        
     } else {
         Command::new("sh")
             .arg("-c")
@@ -53,7 +55,10 @@ pub fn shell_command(command: String, catch_exit_codes: bool) -> Result<ExitStat
     if catch_exit_codes && result.code().unwrap() != 0 {
         let code = result.code().unwrap();
         print_error(format!("process exited with code: {}", code));
-        return Err(::std::io::Error::new(::std::io::ErrorKind::Other, format!("process exited with code: {}", code)));
+        return Err(::std::io::Error::new(
+            ::std::io::ErrorKind::Other,
+            format!("process exited with code: {}", code),
+        ));
     }
 
     Ok(result)

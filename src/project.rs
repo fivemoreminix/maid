@@ -1,12 +1,12 @@
-use std::fs::{File, DirBuilder};
-use std::io::{Write, Read};
+use std::fs::{DirBuilder, File};
+use std::io::{Read, Write};
 use std::path::Path;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
     pub package: Package,
-    pub build: Build,
-    pub dependencies: Dependencies,
+    pub build: Option<Build>,
+    pub dependencies: Option<Dependencies>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -17,18 +17,18 @@ pub struct Package {
     pub target: Target,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Build {
     pub preferred_compiler: Option<::user::Compiler>,
-    pub gnu_options: Vec<String>,
-    pub clang_options: Vec<String>,
+    pub gnu_options: Option<Vec<String>>,
+    pub clang_options: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Dependencies {
-    pub header_search_directories: Vec<String>,
-    pub linker_search_directories: Vec<String>,
-    pub link_libraries: Vec<String>,
+    pub header_search_directories: Option<Vec<String>>,
+    pub linker_search_directories: Option<Vec<String>>,
+    pub link_libraries: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -41,7 +41,10 @@ pub enum Target {
     Python,
 }
 
-static BAD_CHARS: [char; 22] = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '/', '\\', ':', ';', '|', '<', '>', '?'];
+static BAD_CHARS: [char; 22] = [
+    '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '/', '\\', ':', ';', '|',
+    '<', '>', '?',
+];
 
 fn validate_project_name(name: String) -> Option<String> {
     let mut valid_name = String::new();
@@ -95,15 +98,18 @@ impl Project {
 
         // Create the template main.c source file
         let mut source_file = File::create(format!("./{}/source/main.c", name)).unwrap();
-        write!(source_file, "{}",
-r#"#include <stdio.h>
+        write!(
+            source_file,
+            "{}",
+            r#"#include <stdio.h>
 
 int main(int argc, char *argv[])
 {
     printf("Hello, world!\n");
     return 0;
 }
-"#).unwrap();
+"#
+        ).unwrap();
         source_file.sync_data().unwrap();
 
         // Create the project file in the new folder
@@ -114,19 +120,19 @@ int main(int argc, char *argv[])
             package: Package {
                 name: name.to_owned(),
                 version: String::from("0.1.0"),
-                authors: vec!(String::from("Johnny Appleseed")),
+                authors: vec![String::from("Johnny Appleseed")],
                 target,
             },
-            build: Build {
+            build: Some(Build {
                 preferred_compiler: None,
-                gnu_options: vec!(),
-                clang_options: vec!(),
-            },
-            dependencies: Dependencies {
-                header_search_directories: vec!(),
-                linker_search_directories: vec!(),
-                link_libraries: vec!(),
-            }
+                gnu_options: Some(vec![]),
+                clang_options: Some(vec![]),
+            }),
+            dependencies: Some(Dependencies {
+                header_search_directories: Some(vec![]),
+                linker_search_directories: Some(vec![]),
+                link_libraries: Some(vec![]),
+            }),
         };
 
         // Serialize the project into TOML
@@ -153,7 +159,10 @@ int main(int argc, char *argv[])
         project_file.read_to_string(&mut contents).unwrap();
 
         // Deserialize the TOML
-        let project: Project = ::toml::from_str(contents.as_str()).unwrap();
+        let project: Project = match ::toml::from_str(contents.as_str()) {
+            Ok(value) => value,
+            Err(_) => panic!("The project file could not be parsed."),
+        };
 
         Ok(project)
     }
@@ -161,9 +170,9 @@ int main(int argc, char *argv[])
     /// Returns true if this project is not using conventional build settings. (They are not using
     // target = "executable", "static", or "dynamic", in their project file)
     pub fn is_custom(&self) -> bool {
-        if self.package.target == Target::Executable
-        || self.package.target == Target::Static
-        || self.package.target == Target::Dynamic {
+        if self.package.target == Target::Executable || self.package.target == Target::Static
+            || self.package.target == Target::Dynamic
+        {
             false
         } else {
             true

@@ -1,8 +1,8 @@
+#[macro_use]
+extern crate serde_derive;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
-#[macro_use]
-extern crate serde_derive;
 extern crate toml;
 
 mod build;
@@ -42,35 +42,42 @@ enum Options {
         /// Arguments to pass to the binary on execution (use "quotes")
         arguments: Option<String>,
     },
+    #[structopt(name = "clean")]
+    Clean
 }
 
 fn main() {
     let options = Options::from_args();
 
+    std::panic::set_hook(Box::new(|panic_info| {
+        println!(
+            "error: {}",
+            panic_info.payload().downcast_ref::<&str>().unwrap()
+        );
+    }));
+
     match options {
-        Options::New{name, lib} => {
+        Options::New { name, lib } => {
             if lib {
                 match Project::new(name, project::Target::Static) {
                     Err(e) => print_error_str(e),
-                    _ => {},
+                    _ => {}
                 }
             } else {
                 match Project::new(name, project::Target::Executable) {
                     Err(e) => print_error_str(e),
-                    _ => {},
+                    _ => {}
                 }
             }
-        },
-        Options::Build{verbose, release} => {
-            match build::build(release, verbose) {
-                Err(e) => {
-                    print_error_str(e);
-                    return;
-                },
-                _ => {},
+        }
+        Options::Build { verbose, release } => match build::build(release, verbose) {
+            Err(e) => {
+                print_error_str(e);
+                return;
             }
+            _ => {}
         },
-        Options::Run{arguments} => {
+        Options::Run { arguments } => {
             // Get the project file
             let project: Project;
             match Project::get(Path::new(".")) {
@@ -78,7 +85,7 @@ fn main() {
                 Err(e) => {
                     print_error_str(e);
                     return;
-                },
+                }
             }
 
             // Unwrap the program arguments
@@ -92,8 +99,8 @@ fn main() {
                 Err(e) => {
                     print_error_str(e);
                     return;
-                },
-                _ => {},
+                }
+                _ => {}
             }
 
             // Prevent them from being able to run the program if it is not executable
@@ -111,22 +118,32 @@ project.package.target,
                 // Execute the generated binary
                 let result = if cfg!(target_os = "windows") {
                     utils::shell_command(
-                        format!("./target/debug/{}.exe {}", project.package.name, arguments), false)
+                        format!("./target/debug/{}.exe {}", project.package.name, arguments),
+                        false,
+                    )
                 } else {
                     utils::shell_command(
-                        format!("./target/debug/{} {}", project.package.name, arguments), false)
+                        format!("./target/debug/{} {}", project.package.name, arguments),
+                        false,
+                    )
                 };
-                
+
                 match result {
                     Ok(child) => match child.code() {
                         Some(code) => if code != 0 {
                             println!("Exited with code: {}", code)
                         },
-                        None => {},
+                        None => {}
                     },
                     Err(e) => print_error_str(e.description()),
                 }
             }
-        },
+        }
+        Options::Clean => {
+            match Project::get(Path::new(".")) {
+                Ok(_) => std::fs::remove_dir_all("./target").unwrap(),
+                Err(_) => panic!("Project folder not within current directory.")
+            }
+        }
     }
 }

@@ -10,7 +10,6 @@ use user::{Compiler, Config};
 use utils;
 
 pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
-
     let project = Project::get(Path::new("."))?;
 
     // Python, like the other (future) supported scripting languages,
@@ -19,7 +18,8 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
     if project.package.target == Target::Python {
         if Path::new("./build.py").exists() {
             // Execute the python file
-            utils::shell_command(String::from("python ./build.py"), true).expect("execute build.py");
+            utils::shell_command(String::from("python ./build.py"), true)
+                .expect("execute build.py");
 
             println!("Finished");
         } else {
@@ -63,8 +63,8 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         let ext = path.extension().unwrap();
         if path.file_stem().unwrap().to_str() == Some("main") {
             main_extension = ext.to_str().unwrap().to_owned();
-            // NOTE: we don't push the main.(c/cpp) file, because its
-            // automatically loaded by compile().
+        // NOTE: we don't push the main.(c/cpp) file, because its
+        // automatically loaded by compile().
         } else {
             // When the file is not main
             if ext == "c" || ext == "cpp" {
@@ -78,7 +78,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
     let language: Language;
     match main_extension.as_str() {
         "c" => language = Language::C,
-        
+
         "cc" => language = Language::Cpp,
         "cxx" => language = Language::Cpp,
         "cpp" => language = Language::Cpp,
@@ -93,18 +93,26 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         language,
     };
 
-    // If the project configuration has a preferred compiler,
-    // then forcefully use it. Otherwise, use the preferred
-    // compiler specified in the user's config file.
-    match project.build.preferred_compiler {
-        Some(compiler) => match compiler {
-            Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
-            Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
-        },
+    match project.build.clone() {
+        Some(build) => {
+            // If the project configuration has a preferred compiler,
+            // then forcefully use it. Otherwise, use the preferred
+            // compiler specified in the user's config file.
+            match build.preferred_compiler {
+                Some(compiler) => match compiler {
+                    Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
+                    Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
+                },
+                None => match Config::get()?.preferred_compiler {
+                    Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
+                    Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
+                },
+            }
+        }
         None => match Config::get()?.preferred_compiler {
             Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
             Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
-        },
+        }
     }
 
     Ok(())
