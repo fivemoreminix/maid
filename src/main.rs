@@ -13,8 +13,6 @@ mod user;
 use structopt::StructOpt;
 use project::{Project, Target};
 use std::path::Path;
-use utils::print_error_str;
-use std::error::Error;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
@@ -59,34 +57,15 @@ fn main() {
     match options {
         Options::New { name, lib } => {
             if lib {
-                match Project::new(name, project::Target::Static) {
-                    Err(e) => print_error_str(e),
-                    _ => {}
-                }
+                Project::new(name, project::Target::Static).unwrap();
             } else {
-                match Project::new(name, project::Target::Executable) {
-                    Err(e) => print_error_str(e),
-                    _ => {}
-                }
+                Project::new(name, project::Target::Executable).unwrap();
             }
         }
-        Options::Build { verbose, release } => match build::build(release, verbose) {
-            Err(e) => {
-                print_error_str(e);
-                return;
-            }
-            _ => {}
-        },
+        Options::Build { verbose, release } => build::build(release, verbose).unwrap(),
         Options::Run { arguments } => {
             // Get the project file
-            let project: Project;
-            match Project::get(Path::new(".")) {
-                Ok(val) => project = val,
-                Err(e) => {
-                    print_error_str(e);
-                    return;
-                }
-            }
+            let project = Project::get(Path::new(".")).unwrap();
 
             // Unwrap the program arguments
             let arguments = match arguments {
@@ -95,13 +74,7 @@ fn main() {
             };
 
             // Build the program in debug mode, without verbosity
-            match build::build(false, false) {
-                Err(e) => {
-                    print_error_str(e);
-                    return;
-                }
-                _ => {}
-            }
+            build::build(false, false).unwrap();
 
             // Prevent them from being able to run the program if it is not executable
             if project.package.target != project::Target::Executable || project.is_custom() {
@@ -128,14 +101,11 @@ project.package.target,
                     )
                 };
 
-                match result {
-                    Ok(child) => match child.code() {
-                        Some(code) => if code != 0 {
-                            println!("Exited with code: {}", code)
-                        },
-                        None => {}
+                match result.unwrap().code() {
+                    Some(code) => if code != 0 {
+                        println!("Exited with code: {}", code)
                     },
-                    Err(e) => print_error_str(e.description()),
+                    None => {}
                 }
             }
         }

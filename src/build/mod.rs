@@ -6,7 +6,7 @@ mod compilers;
 use std::fs::DirBuilder;
 use std::path::Path;
 use project::{Project, Target};
-use user::{Compiler, Config};
+use user::Config;
 use utils;
 
 pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
@@ -86,42 +86,31 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         _ => return Err("Filetype of main in ./source/ does not match C or C++."),
     }
 
-    let compiler_options = CompilerOptions {
-        release,
-        verbose,
-        sources,
-        language,
+    let mut compiler_options = CompilerOptions {
+        release: release,
+        verbose: verbose,
+        sources: sources,
+        language: language,
+        compiler: Compiler::GNU,
     };
 
-    match project.build.clone() {
+    // Set the compiler
+    compiler_options.compiler = match project.build.clone() {
         Some(build) => {
             // If the project configuration has a preferred compiler,
             // then forcefully use it. Otherwise, use the preferred
             // compiler specified in the user's config file.
             match build.preferred_compiler {
-                Some(compiler) => match compiler {
-                    Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
-                    Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
-                },
-                None => match Config::get()?.preferred_compiler {
-                    Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
-                    Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
-                },
+                Some(compiler) => compiler,
+                None => Config::get()?.preferred_compiler,
             }
         }
-        None => match Config::get()?.preferred_compiler {
-            Compiler::GNU => compilers::compile_gnu(project, compiler_options)?,
-            Compiler::Clang => compilers::compile_clang(project, compiler_options)?,
-        }
-    }
+        None => Config::get()?.preferred_compiler,
+    };
+
+    compilers::compile(project, compiler_options).unwrap();
 
     Ok(())
-}
-
-#[derive(Debug)]
-pub enum Language {
-    C,
-    Cpp,
 }
 
 #[derive(Debug)]
@@ -131,4 +120,17 @@ pub struct CompilerOptions {
     pub verbose: bool,
     pub sources: Vec<String>,
     pub language: Language,
+    pub compiler: Compiler,
+}
+
+#[derive(Debug)]
+pub enum Language {
+    C,
+    Cpp,
+}
+
+#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
+pub enum Compiler {
+    GNU,
+    Clang,
 }

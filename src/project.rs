@@ -19,7 +19,7 @@ pub struct Package {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Build {
-    pub preferred_compiler: Option<::user::Compiler>,
+    pub preferred_compiler: Option<::build::Compiler>,
     pub gnu_options: Option<Vec<String>>,
     pub clang_options: Option<Vec<String>>,
 }

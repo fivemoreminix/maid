@@ -2,16 +2,11 @@ use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::env::current_exe;
+use build::Compiler;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
     pub preferred_compiler: Compiler,
-}
-
-#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
-pub enum Compiler {
-    GNU,
-    Clang,
 }
 
 impl Config {

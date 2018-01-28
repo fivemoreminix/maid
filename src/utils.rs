@@ -25,14 +25,6 @@ pub fn windows_path(path: String) -> String {
     new_path
 }
 
-pub fn print_error_str(error: &str) {
-    eprintln!("\nerror: {}", error);
-}
-
-pub fn print_error(error: String) {
-    eprintln!("\nerror: {}", error);
-}
-
 /// Executes a shell command in the background
 pub fn shell_command(
     command: String,
@@ -54,7 +46,6 @@ pub fn shell_command(
 
     if catch_exit_codes && result.code().unwrap() != 0 {
         let code = result.code().unwrap();
-        print_error(format!("process exited with code: {}", code));
         return Err(::std::io::Error::new(
             ::std::io::ErrorKind::Other,
             format!("process exited with code: {}", code),
