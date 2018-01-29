@@ -4,6 +4,7 @@ version = "0.9.2"
 authors = ["Luke Wilson"]
 
 [dependencies]
+ansi_term = "0.10.2"
 # Argument parsing
 structopt = "0.1.6"
 structopt-derive = "0.1.6"

@@ -1,3 +1,4 @@
+extern crate ansi_term;
 #[macro_use]
 extern crate serde_derive;
 extern crate structopt;
@@ -13,6 +14,7 @@ mod user;
 use structopt::StructOpt;
 use project::{Project, Target};
 use std::path::Path;
+use ansi_term::Color::Green;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
@@ -54,6 +56,9 @@ fn main() {
         );
     }));
 
+    // Enable color support
+    ansi_term::enable_ansi_support().unwrap();
+
     match options {
         Options::New { name, lib } => {
             if lib {
@@ -86,7 +91,7 @@ project.package.target,
                 // It's real ugly, but it works ¯\_(ツ)_/¯
                 return;
             } else if project.package.target == Target::Executable {
-                println!("\t  Running `{}`", project.package.name);
+                println!("\t  {} `{}`", Green.paint("Running"), project.package.name);
 
                 // Execute the generated binary
                 let result = if cfg!(target_os = "windows") {

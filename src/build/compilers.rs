@@ -4,6 +4,7 @@ use super::{CompilerOptions, Language};
 use project::{Project, Target};
 use utils;
 use super::Compiler;
+use ansi_term::Color::Green;
 
 pub fn compile(
     project: Project,
@@ -173,8 +174,8 @@ pub fn compile(
 
     // Calling the compiler with our command
     println!(
-        "\tCompiling {} v{} with GNU",
-        project.package.name, project.package.version
+        "\t{} {} v{} with GNU",
+        Green.paint("Compiling"), project.package.name, project.package.version
     );
     match utils::shell_command(command, true) {
         Err(_) => return Err("Compilation terminated due to previous error(s)."),
@@ -221,9 +222,15 @@ pub fn compile(
     }
 
     if compiler_options.release {
-        println!("\t Finished release [optimized]");
+        println!(
+            "\t {} release [optimized]",
+            Green.paint("Finished"),
+        );
     } else {
-        println!("\t Finished debug [unoptimized]");
+        println!(
+            "\t {} debug [unoptimized]",
+            Green.paint("Finished"),
+        );
     }
 
     Ok(())
