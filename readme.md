@@ -23,8 +23,9 @@ You can also shorten your project files by deleting anything that isn't a part o
 You can add a `build.py` in your project, and it will be executed before compilation.
 ![Python Build Scripts](/etc/images/python_build_scripts.png "Python Build Scripts")
 
-![Folder Structure](/etc/images/folder_structure.png "Folder Structure")
 Maid projects have a very straight forward structure, following Cargo and a good structure for C and C++ projects, containing a folder for includes, and a folder for source files.
+
+![Folder Structure](/etc/images/folder_structure.png "Folder Structure")
 
 # FAQ
 ## Why so many comments in the code?
