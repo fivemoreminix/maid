@@ -6,26 +6,19 @@ use utils;
 use super::Compiler;
 use ansi_term::Color::Green;
 
-pub fn compile(
-    project: Project,
-    compiler_options: CompilerOptions,
-) -> Result<(), &'static str> {
+pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<(), &'static str> {
     let mut command = String::new();
 
     // Set the compiler to use and add the main.(c/cpp) source file
     match compiler_options.language {
-        Language::C => {
-            match compiler_options.compiler {
-                Compiler::GNU => command.push_str("gcc"),
-                Compiler::Clang => command.push_str("clang"),
-            }
+        Language::C => match compiler_options.compiler {
+            Compiler::GNU => command.push_str("gcc"),
+            Compiler::Clang => command.push_str("clang"),
         },
-        Language::Cpp => {
-            match compiler_options.compiler {
-                Compiler::GNU => command.push_str("g++"),
-                Compiler::Clang => command.push_str("clang++"),
-            }
-        }
+        Language::Cpp => match compiler_options.compiler {
+            Compiler::GNU => command.push_str("g++"),
+            Compiler::Clang => command.push_str("clang++"),
+        },
     }
 
     for source in compiler_options.sources {
@@ -44,24 +37,27 @@ pub fn compile(
             command.push_str(format!(" -o ./target/release/{}.o", project.package.name).as_str());
         } else {
             command.push_str(format!(" -o ./target/debug/{}.o", project.package.name).as_str());
-        }
+        },
         Target::Dynamic => unimplemented!(),
         _ => {
             if cfg!(target_os = "windows") {
                 if compiler_options.release {
                     command.push_str(
-                        format!(" -o ./target/release/{}.exe", project.package.name).as_str()
+                        format!(" -o ./target/release/{}.exe", project.package.name).as_str(),
                     );
                 } else {
                     command.push_str(
-                        format!(" -o ./target/debug/{}.exe", project.package.name).as_str()
+                        format!(" -o ./target/debug/{}.exe", project.package.name).as_str(),
                     );
                 }
             } else {
                 if compiler_options.release {
-                    command.push_str(format!(" -o ./target/release/{}", project.package.name).as_str());
+                    command.push_str(
+                        format!(" -o ./target/release/{}", project.package.name).as_str(),
+                    );
                 } else {
-                    command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+                    command
+                        .push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
                 }
             }
         }
@@ -165,7 +161,9 @@ pub fn compile(
     // Calling the compiler with our command
     println!(
         "\t{} {} v{} with GNU",
-        Green.paint("Compiling"), project.package.name, project.package.version
+        Green.paint("Compiling"),
+        project.package.name,
+        project.package.version
     );
     match utils::shell_command(command, true) {
         Err(_) => return Err("Compilation terminated due to previous error(s)."),
@@ -212,15 +210,9 @@ pub fn compile(
     }
 
     if compiler_options.release {
-        println!(
-            "\t {} release [optimized]",
-            Green.paint("Finished"),
-        );
+        println!("\t {} release [optimized]", Green.paint("Finished"),);
     } else {
-        println!(
-            "\t {} debug [unoptimized]",
-            Green.paint("Finished"),
-        );
+        println!("\t {} debug [unoptimized]", Green.paint("Finished"),);
     }
 
     Ok(())

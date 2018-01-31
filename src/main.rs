@@ -17,7 +17,7 @@ use std::path::Path;
 use ansi_term::Color::Green;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "maid", about = "A modern project manager for C, C++, and anything else.")]
+#[structopt(name = "maid", about = "A modern project manager for C and C++.")]
 enum Options {
     #[structopt(name = "new")]
     /// Creates a new project folder in the current directory
@@ -42,8 +42,7 @@ enum Options {
         /// Arguments to pass to the binary on execution (use "quotes")
         arguments: Option<String>,
     },
-    #[structopt(name = "clean")]
-    Clean
+    #[structopt(name = "clean")] Clean,
 }
 
 fn main() {
@@ -114,11 +113,9 @@ project.package.target,
                 }
             }
         }
-        Options::Clean => {
-            match Project::get(Path::new(".")) {
-                Ok(_) => std::fs::remove_dir_all("./target").unwrap(),
-                Err(_) => panic!("Project folder not within current directory.")
-            }
-        }
+        Options::Clean => match Project::get(Path::new(".")) {
+            Ok(_) => std::fs::remove_dir_all("./target").unwrap(),
+            Err(_) => panic!("Project folder not within current directory."),
+        },
     }
 }
