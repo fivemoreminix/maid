@@ -31,7 +31,7 @@ pub struct Dependencies {
     pub link_libraries: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum Target {
     // C and C++
     Executable,
