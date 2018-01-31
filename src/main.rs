@@ -16,7 +16,7 @@ use project::{Project, Target};
 use std::path::Path;
 use ansi_term::Color::Green;
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt)]
 #[structopt(name = "maid", about = "A modern project manager for C and C++.")]
 enum Options {
     #[structopt(name = "new")]
@@ -49,10 +49,10 @@ fn main() {
     let options = Options::from_args();
 
     std::panic::set_hook(Box::new(|panic_info| {
-        println!(
-            "error: {}",
-            panic_info.payload().downcast_ref::<&str>().unwrap()
-        );
+        match panic_info.payload().downcast_ref::<&str>() {
+            Some(message) => eprintln!("error: {}", message),
+            None => eprintln!("maid: error, exiting"),
+        }
     }));
 
     // Enable color support

@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::env::current_exe;
 use build::Compiler;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Config {
     pub preferred_compiler: Compiler,
 }

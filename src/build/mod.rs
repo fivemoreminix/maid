@@ -107,12 +107,11 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         None => Config::get()?.preferred_compiler,
     };
 
-    compilers::compile(project, compiler_options).unwrap();
+    compilers::compile(project, compiler_options)?;
 
     Ok(())
 }
 
-#[derive(Debug)]
 /// A high-level interface for compiler options.
 pub struct CompilerOptions {
     pub release: bool,
@@ -122,13 +121,12 @@ pub struct CompilerOptions {
     pub compiler: Compiler,
 }
 
-#[derive(Debug)]
 pub enum Language {
     C,
     Cpp,
 }
 
-#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, Copy, Clone)]
 pub enum Compiler {
     GNU,
     Clang,

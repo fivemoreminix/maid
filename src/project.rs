@@ -2,14 +2,14 @@ use std::fs::{DirBuilder, File};
 use std::io::{Read, Write};
 use std::path::Path;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Project {
     pub package: Package,
     pub build: Option<Build>,
     pub dependencies: Option<Dependencies>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Package {
     pub name: String,
     pub version: String,
@@ -17,21 +17,21 @@ pub struct Package {
     pub target: Target,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Build {
     pub preferred_compiler: Option<::build::Compiler>,
     pub gnu_options: Option<Vec<String>>,
     pub clang_options: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct Dependencies {
     pub header_search_directories: Option<Vec<String>>,
     pub linker_search_directories: Option<Vec<String>>,
     pub link_libraries: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub enum Target {
     // C and C++
     Executable,
