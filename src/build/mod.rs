@@ -62,9 +62,8 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
     for path in utils::get_files_in_directory(source_dir) {
         let ext = path.extension().unwrap();
         if path.file_stem().unwrap().to_str() == Some("main") {
-            main_extension = ext.to_str().unwrap().to_owned();
-        // NOTE: we don't push the main.(c/cpp) file, because its
-        // automatically loaded by compile().
+            main_extension = ext.to_str().unwrap().to_owned();  // Obtain the extension of our main source file
+            sources.push(path.to_str().unwrap().to_owned());    // Push the main source file
         } else {
             // When the file is not main
             if ext == "c" || ext == "cpp" {

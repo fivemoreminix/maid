@@ -16,25 +16,15 @@ pub fn compile(
     match compiler_options.language {
         Language::C => {
             match compiler_options.compiler {
-                Compiler::GNU => {
-                    command.push_str("gcc");
-                },
-                Compiler::Clang => {
-                    command.push_str("clang");
-                }
+                Compiler::GNU => command.push_str("gcc"),
+                Compiler::Clang => command.push_str("clang"),
             }
-            command.push_str(" ./source/main.c");
         },
         Language::Cpp => {
             match compiler_options.compiler {
-                Compiler::GNU => {
-                    command.push_str("g++");
-                },
-                Compiler::Clang => {
-                    command.push_str("clang++");
-                }
+                Compiler::GNU => command.push_str("g++"),
+                Compiler::Clang => command.push_str("clang++"),
             }
-            command.push_str(" ./source/main.cpp");
         }
     }
 
