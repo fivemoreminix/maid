@@ -33,12 +33,9 @@ pub struct Dependencies {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum Target {
-    // C and C++
     Executable,
     Static,
     Dynamic,
-    // Scripting
-    Python,
 }
 
 static BAD_CHARS: [char; 22] = [
@@ -78,7 +75,7 @@ fn validate_project_name(name: String) -> Option<String> {
 
 impl Project {
     /// Creates a new project and returns its properties.
-    pub fn new(invalidated_name: String, target: Target) -> Result<Project, &'static str> {
+    pub fn new(invalidated_name: String) -> Result<Project, &'static str> {
         let name: String;
         match validate_project_name(invalidated_name) {
             Some(new) => name = new,
@@ -121,7 +118,7 @@ int main(int argc, char *argv[])
                 name: name.to_owned(),
                 version: String::from("0.1.0"),
                 authors: vec![String::from("Johnny Appleseed")],
-                target,
+                target: Target::Executable,
             },
             build: Some(Build {
                 preferred_compiler: None,
@@ -145,7 +142,8 @@ int main(int argc, char *argv[])
 
         Ok(project)
     }
-    /// Gets the Project in the directory given
+
+    /// Gets the Project in the given directory
     pub fn get(dir: &Path) -> Result<Project, &'static str> {
         // Open the project file
         let mut project_file: File;
@@ -165,17 +163,5 @@ int main(int argc, char *argv[])
         };
 
         Ok(project)
-    }
-
-    /// Returns true if this project is not using conventional build settings. (They are not using
-    // target = "executable", "static", or "dynamic", in their project file)
-    pub fn is_custom(&self) -> bool {
-        if self.package.target == Target::Executable || self.package.target == Target::Static
-            || self.package.target == Target::Dynamic
-        {
-            false
-        } else {
-            true
-        }
     }
 }

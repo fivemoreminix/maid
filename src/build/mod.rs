@@ -5,28 +5,12 @@ mod compilers;
 
 use std::fs::DirBuilder;
 use std::path::Path;
-use project::{Project, Target};
+use project::Project;
 use user::Config;
 use utils;
 
 pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
     let project = Project::get(Path::new("."))?;
-
-    // Python, like the other (future) supported scripting languages,
-    // is used to custom build. This enables anyone to make any
-    // kind of project they need.
-    if project.package.target == Target::Python {
-        if Path::new("./build.py").exists() {
-            // Execute the python file
-            utils::shell_command(String::from("python ./build.py"), true)
-                .expect("execute build.py");
-
-            println!("Finished");
-        } else {
-            return Err("The target configuration is set to Python, but I can't find the file 'build.py' at the root of the project.");
-        }
-        return Ok(());
-    }
 
     // If this project has a build.py file but does not specifically have
     // Python as its target configuration, we just execute the file and continue

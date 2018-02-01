@@ -12,7 +12,7 @@ mod utils;
 mod user;
 
 use structopt::StructOpt;
-use project::{Project, Target};
+use project::Project;
 use std::path::Path;
 use ansi_term::Color::Green;
 
@@ -61,9 +61,9 @@ fn main() {
     match options {
         Options::New { name, lib } => {
             if lib {
-                Project::new(name, project::Target::Static).unwrap();
+                Project::new(name).unwrap();
             } else {
-                Project::new(name, project::Target::Executable).unwrap();
+                Project::new(name).unwrap();
             }
         }
         Options::Build { verbose, release } => build::build(release, verbose).unwrap(),
@@ -80,16 +80,10 @@ fn main() {
             // Build the program in debug mode, without verbosity
             build::build(false, false).unwrap();
 
-            // Prevent them from being able to run the program if it is not executable
-            if project.package.target != project::Target::Executable || project.is_custom() {
-                println!(
-"Oops!\nYour project file shows that this binary aims to be {:?}, but I can't execute those.\n{}{}",
-project.package.target,
-"(To be able to execute your program, please change the configuration \"target\" to equal",
-" \"executable\", in your project file)\nI built the program for you anyways. :)");
-                // It's real ugly, but it works ¯\_(ツ)_/¯
-                return;
-            } else if project.package.target == Target::Executable {
+            if project.package.target != project::Target::Executable {
+                // Prevent them from being able to run the program if it is not executable
+                panic!("Can't execute {:?} targets.", project.package.target);
+            } else {
                 println!("\t  {} `{}`", Green.paint("Running"), project.package.name);
 
                 // Execute the generated binary
