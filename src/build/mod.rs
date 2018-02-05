@@ -110,7 +110,7 @@ pub enum Language {
     Cpp,
 }
 
-#[derive(Serialize, Deserialize, Copy, Clone)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum Compiler {
     GNU,
     Clang,

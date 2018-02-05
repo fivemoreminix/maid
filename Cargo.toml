@@ -4,6 +4,7 @@ version = "1.0.0"
 authors = ["Luke Wilson"]
 
 [dependencies]
+time = "*"
 ansi_term = "0.10.2"
 # Argument parsing
 structopt = "0.1.6"

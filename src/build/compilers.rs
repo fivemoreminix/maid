@@ -158,13 +158,14 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
         eprintln!("{}", command);
     }
 
-    // Calling the compiler with our command
     println!(
-        "\t{} {} v{} with GNU",
+        "\t{} {} v{} with {:?}",
         Green.paint("Compiling"),
         project.package.name,
-        project.package.version
+        project.package.version,
+        compiler_options.compiler
     );
+    // Calling the compiler with our command
     match utils::shell_command(command, true) {
         Err(_) => return Err("Compilation terminated due to previous error(s)."),
         _ => {}
