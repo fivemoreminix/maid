@@ -50,7 +50,7 @@ fn main() {
 
     std::panic::set_hook(Box::new(|panic_info| {
         match panic_info.payload().downcast_ref::<&str>() {
-            Some(message) => eprintln!("error: {}", message),
+            Some(message) => eprintln!("maid: error: {}", message),
             None => eprintln!("maid: error, exiting"),
         }
     }));
@@ -89,12 +89,12 @@ fn main() {
                 // Execute the generated binary
                 let result = if cfg!(target_os = "windows") {
                     utils::shell_command(
-                        format!("./target/debug/{}.exe {}", project.package.name, arguments),
+                        &format!("./target/debug/{}.exe {}", project.package.name, arguments),
                         false,
                     )
                 } else {
                     utils::shell_command(
-                        format!("./target/debug/{} {}", project.package.name, arguments),
+                        &format!("./target/debug/{} {}", project.package.name, arguments),
                         false,
                     )
                 };

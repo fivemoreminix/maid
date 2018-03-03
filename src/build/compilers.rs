@@ -6,6 +6,10 @@ use utils;
 use super::Compiler;
 use ansi_term::Color::Green;
 
+pub fn detect_available_compilers() -> Vec<Compiler> {
+    unimplemented!()
+}
+
 pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<(), &'static str> {
     let mut command = String::new();
 
@@ -14,10 +18,12 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
         Language::C => match compiler_options.compiler {
             Compiler::GNU => command.push_str("gcc"),
             Compiler::Clang => command.push_str("clang"),
+            Compiler::MSVC => unimplemented!(),
         },
         Language::Cpp => match compiler_options.compiler {
             Compiler::GNU => command.push_str("g++"),
             Compiler::Clang => command.push_str("clang++"),
+            Compiler::MSVC => unimplemented!(),
         },
     }
 
@@ -98,6 +104,7 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
                 command.push_str(" -DMAID_DEBUG");
             }
         }
+        Compiler::MSVC => unimplemented!(),
     }
 
     if let Some(dependencies) = project.dependencies {
@@ -150,6 +157,7 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
                     None => {}
                 }
             }
+            Compiler::MSVC => unimplemented!(),
         }
     }
 
@@ -166,7 +174,7 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
         compiler_options.compiler
     );
     // Calling the compiler with our command
-    match utils::shell_command(command, true) {
+    match utils::shell_command(&command, true) {
         Err(_) => return Err("Compilation terminated due to previous error(s)."),
         _ => {}
     }
@@ -177,7 +185,7 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
             match compiler_options.compiler {
                 Compiler::GNU => {
                     if let Err(_) = utils::shell_command(
-                        format!(
+                        &format!(
                             "ar rcs ./target/release/lib{}.a ./target/release/{}.o",
                             project.package.name, project.package.name
                         ),
@@ -189,12 +197,13 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
                 Compiler::Clang => {
                     unimplemented!();
                 }
+                Compiler::MSVC => unimplemented!(),
             }
         } else {
             match compiler_options.compiler {
                 Compiler::GNU => {
                     if let Err(_) = utils::shell_command(
-                        format!(
+                        &format!(
                             "ar rcs ./target/debug/lib{}.a ./target/debug/{}.o",
                             project.package.name, project.package.name
                         ),
@@ -206,14 +215,15 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
                 Compiler::Clang => {
                     unimplemented!();
                 }
+                Compiler::MSVC => unimplemented!(),
             }
         }
     }
 
     if compiler_options.release {
-        println!("\t {} release [optimized]", Green.paint("Finished"),);
+        println!("\t {} release [optimized]", Green.paint("Finished"));
     } else {
-        println!("\t {} debug [unoptimized]", Green.paint("Finished"),);
+        println!("\t {} debug [unoptimized]", Green.paint("Finished"));
     }
 
     Ok(())

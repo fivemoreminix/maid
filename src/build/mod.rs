@@ -19,7 +19,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         if verbose {
             eprintln!("Executing build.py...");
         }
-        utils::shell_command(String::from("python ./build.py"), true).expect("execute build.py");
+        utils::shell_command("python ./build.py", true).expect("execute build.py");
     }
 
     let mut dir_builder = DirBuilder::new();
@@ -114,4 +114,5 @@ pub enum Language {
 pub enum Compiler {
     GNU,
     Clang,
+    MSVC,
 }

@@ -2,38 +2,26 @@ use std::process::{Command, ExitStatus};
 use std::path::{Path, PathBuf};
 use std::fs;
 
-pub fn string_to_vec(string: String) -> Vec<String> {
+pub fn string_to_vec(string: &str) -> Vec<String> {
     string.split_whitespace().map(|s| s.to_owned()).collect()
 }
 
 /// Takes a String and turns all occurrences of '/' into '\'.
-pub fn windows_path(path: String) -> String {
-    // Create an iterator over the characters in the path
-    let chars = path.chars();
-    // Make an empty String
-    let mut new_path = String::new();
-    // Iterate over every character in the path
-    for c in chars {
-        if c == '/' {
-            // If a character is a forward slash, push the Windows version
-            new_path.push('\\');
-        } else {
-            // If it's not a forward slash, just push the character
-            new_path.push(c);
-        }
-    }
-    new_path
+pub fn windows_path(path: &str) -> String {
+    path.chars()
+        .map(|c| if c == '/' { '\\' } else { c })
+        .collect()
 }
 
 /// Executes a shell command in the background
 pub fn shell_command(
-    command: String,
+    command: &str,
     catch_exit_codes: bool,
 ) -> Result<ExitStatus, ::std::io::Error> {
     let mut status = if cfg!(target_os = "windows") {
         Command::new("cmd")
             .arg("/C")
-            .args(string_to_vec(windows_path(command)).as_slice())
+            .args(string_to_vec(&windows_path(command)).as_slice())
             .spawn()?
     } else {
         Command::new("sh")
