@@ -42,7 +42,8 @@ enum Options {
         /// Arguments to pass to the binary on execution (use "quotes")
         arguments: Option<String>,
     },
-    #[structopt(name = "clean")] Clean,
+    #[structopt(name = "clean")]
+    Clean,
 }
 
 fn main() {
@@ -84,17 +85,19 @@ fn main() {
                 // Prevent them from being able to run the program if it is not executable
                 panic!("Can't execute {:?} targets.", project.package.target);
             } else {
-                println!("\t  {} `{}`", Green.paint("Running"), project.package.name);
+                println!("     {} `{}`", Green.paint("Running"), project.package.name);
 
                 // Execute the generated binary
                 let result = if cfg!(target_os = "windows") {
                     utils::shell_command(
                         &format!("./target/debug/{}.exe {}", project.package.name, arguments),
                         false,
+                        false,
                     )
                 } else {
                     utils::shell_command(
                         &format!("./target/debug/{} {}", project.package.name, arguments),
+                        false,
                         false,
                     )
                 };

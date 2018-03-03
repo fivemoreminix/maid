@@ -6,10 +6,6 @@ use utils;
 use super::Compiler;
 use ansi_term::Color::Green;
 
-pub fn detect_available_compilers() -> Vec<Compiler> {
-    unimplemented!()
-}
-
 pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<(), &'static str> {
     let mut command = String::new();
 
@@ -167,14 +163,14 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
     }
 
     println!(
-        "\t{} {} v{} with {:?}",
+        "   {} {} v{} with {:?}",
         Green.paint("Compiling"),
         project.package.name,
         project.package.version,
         compiler_options.compiler
     );
     // Calling the compiler with our command
-    match utils::shell_command(&command, true) {
+    match utils::shell_command(&command, true, false) {
         Err(_) => return Err("Compilation terminated due to previous error(s)."),
         _ => {}
     }
@@ -190,6 +186,7 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
                             project.package.name, project.package.name
                         ),
                         true,
+                        false,
                     ) {
                         return Err("compilation terminated due to previous error(s)");
                     }
@@ -208,6 +205,7 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
                             project.package.name, project.package.name
                         ),
                         true,
+                        false,
                     ) {
                         return Err("Compilation terminated due to previous error(s).");
                     }
@@ -221,9 +219,9 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
     }
 
     if compiler_options.release {
-        println!("\t {} release [optimized]", Green.paint("Finished"));
+        println!("    {} release [optimized]", Green.paint("Finished"));
     } else {
-        println!("\t {} debug [unoptimized]", Green.paint("Finished"));
+        println!("    {} debug [unoptimized]", Green.paint("Finished"));
     }
 
     Ok(())

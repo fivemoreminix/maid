@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::env::current_exe;
-use build::Compiler;
+use build::{detect_available_compilers, Compiler};
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -55,19 +55,25 @@ impl Config {
             Err(_) => return Err("cannot create configuration file."),
         }
 
-        // Initialize the configuration
-        let config = Config {
-            preferred_compiler: Compiler::GNU,
-        };
+        let available_compilers = detect_available_compilers();
+        if available_compilers.is_empty() {
+            Err("No available compilers found. Make sure you have a major C compiler installed and in your PATH variable.")
+        } else {
+            // Initialize the configuration
+            let config = Config {
+                preferred_compiler: available_compilers[0],
+            };
+            println!("{:?}", available_compilers[0]);
 
-        // Serialize the config into TOML
-        let toml = ::toml::to_string(&config).unwrap();
+            // Serialize the config into TOML
+            let toml = ::toml::to_string(&config).unwrap();
 
-        // Write the config to the new configuration file
-        write!(config_file, "{}", toml).unwrap();
-        // Sync IO operations for the new file before continuing
-        config_file.sync_all().unwrap();
+            // Write the config to the new configuration file
+            write!(config_file, "{}", toml).unwrap();
+            // Sync IO operations for the new file before continuing
+            config_file.sync_all().unwrap();
 
-        Ok(config)
+            Ok(config)
+        }
     }
 }

@@ -19,7 +19,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         if verbose {
             eprintln!("Executing build.py...");
         }
-        utils::shell_command("python ./build.py", true).expect("execute build.py");
+        utils::shell_command("python ./build.py", true, false).expect("execute build.py");
     }
 
     let mut dir_builder = DirBuilder::new();
@@ -74,7 +74,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         verbose: verbose,
         sources: sources,
         language: language,
-        compiler: Compiler::GNU,
+        compiler: Compiler::GNU, // Just for initialization: this is not final.
     };
 
     // Set the compiler
@@ -115,4 +115,17 @@ pub enum Compiler {
     GNU,
     Clang,
     MSVC,
+}
+
+pub fn detect_available_compilers() -> Vec<Compiler> {
+    let mut compilers = Vec::<Compiler>::new();
+
+    if utils::shell_command_exists("gcc -v") {
+        compilers.push(Compiler::GNU)
+    }
+    if utils::shell_command_exists("clang -v") {
+        compilers.push(Compiler::Clang)
+    }
+
+    compilers
 }

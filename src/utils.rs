@@ -13,34 +13,77 @@ pub fn windows_path(path: &str) -> String {
         .collect()
 }
 
-/// Executes a shell command in the background
+/// Executes a shell command and waits for it to finish
 pub fn shell_command(
     command: &str,
     catch_exit_codes: bool,
+    silent: bool,
 ) -> Result<ExitStatus, ::std::io::Error> {
-    let mut status = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .arg("/C")
-            .args(string_to_vec(&windows_path(command)).as_slice())
-            .spawn()?
+    let command = if cfg!(windows) {
+        string_to_vec(&windows_path(command))
     } else {
-        Command::new("sh")
-            .arg("-c")
-            .args(string_to_vec(command).as_slice())
-            .spawn()?
+        string_to_vec(&command)
     };
 
-    let result = status.wait().unwrap();
+    let result = if silent {
+        Command::new(&command[0])
+            .args(&command[1..])
+            .output()?
+            .status
+    } else {
+        if cfg!(target_os = "windows") {
+            Command::new("cmd")
+                .arg("/C")
+                .args(command)
+                .spawn()?
+                .wait()
+                .unwrap()
+        } else {
+            Command::new("sh")
+                .arg("-c")
+                .args(command)
+                .spawn()?
+                .wait()
+                .unwrap()
+        }
+    };
 
     if catch_exit_codes && result.code().unwrap() != 0 {
         let code = result.code().unwrap();
         return Err(::std::io::Error::new(
             ::std::io::ErrorKind::Other,
-            format!("process exited with code: {}", code),
+            format!("Process exited with code: {}.", code),
         ));
     }
 
     Ok(result)
+}
+
+pub fn shell_command_exists(command: &str) -> bool {
+    let result = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .arg("/C")
+            .args(&string_to_vec(&windows_path(command)))
+            .output()
+            .expect("Could not spawn a shell to locate available compilers.")
+            .status
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .args(&string_to_vec(&command))
+            .status()
+            .expect("Could not spawn a shell to locate available compilers.")
+    };
+
+    if cfg!(windows) {
+        if result.code().unwrap() == 1 {
+            false
+        } else {
+            true
+        }
+    } else {
+        false
+    }
 }
 
 pub fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {
