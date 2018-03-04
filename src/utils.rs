@@ -16,7 +16,6 @@ pub fn windows_path(path: &str) -> String {
 /// Executes a shell command and waits for it to finish
 pub fn shell_command(
     command: &str,
-    catch_exit_codes: bool,
     silent: bool,
 ) -> Result<ExitStatus, ::std::io::Error> {
     let command = if cfg!(windows) {
@@ -36,51 +35,24 @@ pub fn shell_command(
                 .arg("/C")
                 .args(command)
                 .spawn()?
-                .wait()
-                .unwrap()
+                .wait()?
         } else {
             Command::new("sh")
                 .arg("-c")
                 .args(command)
                 .spawn()?
-                .wait()
-                .unwrap()
+                .wait()?
         }
     };
-
-    if catch_exit_codes && result.code().unwrap() != 0 {
-        let code = result.code().unwrap();
-        return Err(::std::io::Error::new(
-            ::std::io::ErrorKind::Other,
-            format!("Process exited with code: {}.", code),
-        ));
-    }
 
     Ok(result)
 }
 
 pub fn shell_command_exists(command: &str) -> bool {
-    let result = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .arg("/C")
-            .args(&string_to_vec(&windows_path(command)))
-            .output()
-            .expect("Could not spawn a shell to locate available compilers.")
-            .status
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .args(&string_to_vec(&command))
-            .status()
-            .expect("Could not spawn a shell to locate available compilers.")
-    };
+    let result = shell_command(command, true).unwrap();
 
-    if cfg!(windows) {
-        if result.code().unwrap() == 1 {
-            false
-        } else {
-            true
-        }
+    if result.success() {
+        true
     } else {
         false
     }

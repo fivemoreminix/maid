@@ -6,7 +6,22 @@ use utils;
 use super::Compiler;
 use ansi_term::Color::Green;
 
-pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<(), &'static str> {
+#[derive(Debug)]
+pub enum CompileErrorType {
+    CompilerReturnedNonZero,
+    CouldNotLocateProjectFile,
+    PythonBuildScriptReturnedNonZero,
+    FileTypeOfMainNotRecognized,
+    CouldNotReadUserConfig,
+}
+
+#[derive(Debug)]
+pub struct CompileError {
+    pub error_type: CompileErrorType,
+    pub msg: String,
+}
+
+pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<(), CompileError> {
     let mut command = String::new();
 
     // Set the compiler to use and add the main.(c/cpp) source file
@@ -169,10 +184,13 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
         project.package.version,
         compiler_options.compiler
     );
+
     // Calling the compiler with our command
-    match utils::shell_command(&command, true, false) {
-        Err(_) => return Err("Compilation terminated due to previous error(s)."),
-        _ => {}
+    if utils::shell_command(&command, false).expect("Failed to query compiler.").success() == false {
+        return Err(CompileError {
+            error_type: CompileErrorType::CompilerReturnedNonZero,
+            msg: "Compilation terminated due to previous error(s).".to_string(),
+        });
     }
 
     // If we're working with a static library, we need to make an archive of the .o files
@@ -180,15 +198,17 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
         if compiler_options.release {
             match compiler_options.compiler {
                 Compiler::GNU => {
-                    if let Err(_) = utils::shell_command(
+                    if utils::shell_command(
                         &format!(
                             "ar rcs ./target/release/lib{}.a ./target/release/{}.o",
                             project.package.name, project.package.name
                         ),
-                        true,
                         false,
-                    ) {
-                        return Err("compilation terminated due to previous error(s)");
+                    ).expect("Failed to query compiler.").success() == false {
+                        return Err(CompileError {
+                            error_type: CompileErrorType::CompilerReturnedNonZero,
+                            msg: "Compilation terminated due to previous error(s)".to_string(),
+                        });
                     }
                 }
                 Compiler::Clang => {
@@ -199,15 +219,17 @@ pub fn compile(project: Project, compiler_options: CompilerOptions) -> Result<()
         } else {
             match compiler_options.compiler {
                 Compiler::GNU => {
-                    if let Err(_) = utils::shell_command(
+                    if utils::shell_command(
                         &format!(
                             "ar rcs ./target/debug/lib{}.a ./target/debug/{}.o",
                             project.package.name, project.package.name
                         ),
-                        true,
                         false,
-                    ) {
-                        return Err("Compilation terminated due to previous error(s).");
+                    ).expect("Failed to query compiler.").success() == false {
+                        return Err(CompileError {
+                            error_type: CompileErrorType::CompilerReturnedNonZero,
+                            msg: "Compilation terminated due to previous error(s).".to_string(),
+                        });
                     }
                 }
                 Compiler::Clang => {

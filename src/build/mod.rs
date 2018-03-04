@@ -3,14 +3,18 @@
 
 mod compilers;
 
+use self::compilers::{CompileError, CompileErrorType};
 use std::fs::DirBuilder;
 use std::path::Path;
 use project::Project;
 use user::Config;
 use utils;
 
-pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
-    let project = Project::get(Path::new("."))?;
+pub fn build(release: bool, verbose: bool) -> Result<(), compilers::CompileError> {
+    let project = match Project::get(Path::new(".")) {
+        Ok(project) => project,
+        Err(e) => return Err(CompileError { error_type: CompileErrorType::CouldNotLocateProjectFile, msg: e.to_string() }),
+    };
 
     // If this project has a build.py file but does not specifically have
     // Python as its target configuration, we just execute the file and continue
@@ -19,7 +23,10 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         if verbose {
             eprintln!("Executing build.py...");
         }
-        utils::shell_command("python ./build.py", true, false).expect("execute build.py");
+
+        if utils::shell_command("python ./build.py", false).expect("Failed to execute Python.").success() == false {
+            return Err(CompileError { error_type: CompileErrorType::PythonBuildScriptReturnedNonZero, msg: "Python build script returned non zero.".to_string() });
+        }
     }
 
     let mut dir_builder = DirBuilder::new();
@@ -66,7 +73,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
         "cxx" => language = Language::Cpp,
         "cpp" => language = Language::Cpp,
 
-        _ => return Err("Filetype of main in ./source/ does not match C or C++."),
+        _ => return Err(CompileError { error_type: CompileErrorType::FileTypeOfMainNotRecognized, msg: "File extension of 'main' in './source/' does not match C or C++.".to_string() }),
     }
 
     let mut compiler_options = CompilerOptions {
@@ -85,10 +92,16 @@ pub fn build(release: bool, verbose: bool) -> Result<(), &'static str> {
             // compiler specified in the user's config file.
             match build.preferred_compiler {
                 Some(compiler) => compiler,
-                None => Config::get()?.preferred_compiler,
+                None => match Config::get() {
+                    Ok(config) => config.preferred_compiler,
+                    Err(e) => return Err(CompileError { error_type: CompileErrorType::CouldNotReadUserConfig, msg: e.to_string() }),
+                }
             }
         }
-        None => Config::get()?.preferred_compiler,
+        None => match Config::get() {
+            Ok(config) => config.preferred_compiler,
+            Err(e) => return Err(CompileError { error_type: CompileErrorType::CouldNotReadUserConfig, msg: e.to_string() }),
+        },
     };
 
     compilers::compile(project, compiler_options)?;

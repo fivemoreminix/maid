@@ -52,7 +52,7 @@ fn main() {
     std::panic::set_hook(Box::new(|panic_info| {
         match panic_info.payload().downcast_ref::<&str>() {
             Some(message) => eprintln!("maid: error: {}", message),
-            None => eprintln!("maid: error, exiting"),
+            None => eprintln!("maid: Error, exiting."),
         }
     }));
 
@@ -92,21 +92,16 @@ fn main() {
                     utils::shell_command(
                         &format!("./target/debug/{}.exe {}", project.package.name, arguments),
                         false,
-                        false,
                     )
                 } else {
                     utils::shell_command(
                         &format!("./target/debug/{} {}", project.package.name, arguments),
                         false,
-                        false,
                     )
-                };
+                }.unwrap();
 
-                match result.unwrap().code() {
-                    Some(code) => if code != 0 {
-                        println!("Exited with code: {}", code)
-                    },
-                    None => {}
+                if result.success() == false {
+                    println!("Exited with code: {}", result.code().unwrap());
                 }
             }
         }
