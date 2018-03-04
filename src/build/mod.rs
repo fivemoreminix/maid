@@ -50,7 +50,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), compilers::CompileError
     let mut main_extension = String::new();
 
     // This is where we get our source files
-    for path in utils::get_files_in_directory(source_dir) {
+    for path in utils::get_files_in_directory(source_dir, true) {
         let ext = path.extension().unwrap();
         if path.file_stem().unwrap().to_str() == Some("main") {
             main_extension = ext.to_str().unwrap().to_owned(); // Obtain the extension of our main source file

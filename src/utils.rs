@@ -58,8 +58,7 @@ pub fn shell_command_exists(command: &str) -> bool {
     }
 }
 
-pub fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {
-    // It must be a directory
+pub fn get_files_in_directory(directory: &Path, recursive: bool) -> Vec<PathBuf> {
     assert!(directory.is_dir());
 
     let mut files = Vec::<PathBuf>::new();
@@ -69,11 +68,16 @@ pub fn get_files_in_directory(directory: &Path) -> Vec<PathBuf> {
         let entry = entry.unwrap();
         let path = entry.path();
         if path.is_dir() {
-            // What do we do with a directory?
+            files.push(path.clone());
+            if recursive {
+                for p in get_files_in_directory(&path, true) {
+                    files.push(p);
+                }
+            }
         } else {
-            // It's a file, so we add it
             files.push(path);
         }
     }
+
     files
 }
