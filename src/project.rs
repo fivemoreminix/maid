@@ -43,48 +43,25 @@ static BAD_CHARS: [char; 22] = [
     '<', '>', '?',
 ];
 
-fn validate_project_name(name: String) -> Option<String> {
-    let mut valid_name = String::new();
-    let chars = name.chars();
-    // Iterate over every character in `name`,
-    // if the character matches ANY of the `BAD_CHARS`,
-    // we ignore it, otherwise we push it onto `valid_name`.
-    for c in chars {
-        let mut is_bad = false;
-        for bad_char in BAD_CHARS.iter() {
-            if c == *bad_char {
-                is_bad = true;
-                break;
-            }
-        }
-
-        // If the character has been matched with a `bad_char`,
-        // then we don't push it.
-        if !is_bad {
-            valid_name.push(c);
-        }
-    }
-
-    // Return the correct Option for the String we validated
-    if valid_name.is_empty() {
-        None
-    } else {
-        Some(valid_name)
-    }
+fn is_valid_project_name(name: &str) -> bool {
+    let mut bad_chars_iter = BAD_CHARS.iter();
+    let mut valid = true;
+    name.chars().for_each(|c| if bad_chars_iter.any(|bad_c| c == *bad_c) {
+        valid = false;
+    });
+    valid
 }
 
 impl Project {
     /// Creates a new project and returns its properties.
-    pub fn new(invalidated_name: String) -> Result<Project, &'static str> {
-        let name: String;
-        match validate_project_name(invalidated_name) {
-            Some(new) => name = new,
-            None => return Err("the given project name contained only invalid characters."),
+    pub fn new(name: &str) -> Result<Project, String> {
+        if !is_valid_project_name(name) {
+            return Err(format!("Project name may not contain any of the following restricted characters:\n{:?}", BAD_CHARS));
         }
 
         // Check if there is already a folder with the same name as the project
         if Path::new(format!("./{}", name).as_str()).is_dir() {
-            return Err("a folder with the same name already exists.");
+            return Err(String::from("a folder with the same name already exists."));
         }
 
         // Create the project directory

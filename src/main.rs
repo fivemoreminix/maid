@@ -62,9 +62,9 @@ fn main() {
     match options {
         Options::New { name, lib } => {
             if lib {
-                Project::new(name).unwrap();
+                Project::new(&name).unwrap();
             } else {
-                Project::new(name).unwrap();
+                Project::new(&name).unwrap();
             }
         }
         Options::Build { verbose, release } => build::build(release, verbose).unwrap(),
