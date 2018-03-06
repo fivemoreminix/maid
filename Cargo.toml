@@ -9,6 +9,9 @@ readme = "readme.md"
 keywords = ["package", "manager", "build", "c", "c++"]
 categories = ["command-line-utilities", "development-tools", "development-tools::build-utils"]
 license = "GPL-3.0"
+exclude = [
+    "etc/*"
+]
 
 [dependencies]
 ansi_term = "0.10.2"
