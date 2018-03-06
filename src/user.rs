@@ -59,11 +59,25 @@ impl Config {
         if available_compilers.is_empty() {
             Err("No available compilers found. Make sure you have a major C compiler installed and in your PATH variable.")
         } else {
+            let default_compiler = if cfg!(target_os = "windows") {
+                if available_compilers.clone().into_iter().any(|compiler| compiler == Compiler::GNU) {
+                    Compiler::GNU // Default compiler for Windows
+                } else {
+                    available_compilers[0]
+                }
+            } else {
+                if available_compilers.clone().into_iter().any(|compiler| compiler == Compiler::GNU) {
+                    Compiler::GNU // Default compiler for *nix
+                } else {
+                    available_compilers[0]
+                }
+            };
+
             // Initialize the configuration
             let config = Config {
-                preferred_compiler: available_compilers[0],
+                preferred_compiler: default_compiler,
             };
-            println!("{:?}", available_compilers[0]);
+            println!("defaulted compiler: {:?}", default_compiler);
 
             // Serialize the config into TOML
             let toml = ::toml::to_string(&config).unwrap();

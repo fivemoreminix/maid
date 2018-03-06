@@ -49,13 +49,7 @@ pub fn shell_command(
 }
 
 pub fn shell_command_exists(command: &str) -> bool {
-    let result = shell_command(command, true).unwrap();
-
-    if result.success() {
-        true
-    } else {
-        false
-    }
+    shell_command(command, true).unwrap().success()
 }
 
 pub fn get_files_in_directory(directory: &Path, recursive: bool) -> Vec<PathBuf> {

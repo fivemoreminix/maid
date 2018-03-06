@@ -2,9 +2,15 @@
 name = "maid"
 version = "1.0.0"
 authors = ["Luke Wilson"]
+description = "A modern package manager for C and C++."
+documentation = "https://github.com/asmoaesl/maid/wiki"
+repository = "https://github.com/asmoaesl/maid"
+readme = "readme.md"
+keywords = ["package", "manager", "build", "c", "c++"]
+categories = ["command-line-utilities", "development-tools", "development-tools::build-utils"]
+license = "GPL-3.0"
 
 [dependencies]
-time = "*"
 ansi_term = "0.10.2"
 # Argument parsing
 structopt = "0.1.6"

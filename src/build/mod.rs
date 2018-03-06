@@ -1,16 +1,17 @@
 //! This file is used for collecting the source files, preferences, and more before
 //! the actual "building", or "compiling", of the binary file.
 
-mod compilers;
+mod gcc;
+mod clang;
 
-use self::compilers::{CompileError, CompileErrorType};
 use std::fs::DirBuilder;
 use std::path::Path;
 use project::Project;
 use user::Config;
 use utils;
+use ansi_term::Color::Green;
 
-pub fn build(release: bool, verbose: bool) -> Result<(), compilers::CompileError> {
+pub fn build(release: bool, verbose: bool) -> Result<(), CompileError> {
     let project = match Project::get(Path::new(".")) {
         Ok(project) => project,
         Err(e) => return Err(CompileError { error_type: CompileErrorType::CouldNotLocateProjectFile, msg: e.to_string() }),
@@ -76,16 +77,15 @@ pub fn build(release: bool, verbose: bool) -> Result<(), compilers::CompileError
         _ => return Err(CompileError { error_type: CompileErrorType::FileTypeOfMainNotRecognized, msg: "File extension of 'main' in './source/' does not match C or C++.".to_string() }),
     }
 
-    let mut compiler_options = CompilerOptions {
+    let compiler_options = CompilerOptions {
         release: release,
         verbose: verbose,
         sources: sources,
         language: language,
-        compiler: Compiler::GNU, // Just for initialization: this is not final.
     };
 
     // Set the compiler
-    compiler_options.compiler = match project.build.clone() {
+    let compiler = match project.build.clone() {
         Some(build) => {
             // If the project configuration has a preferred compiler,
             // then forcefully use it. Otherwise, use the preferred
@@ -104,41 +104,109 @@ pub fn build(release: bool, verbose: bool) -> Result<(), compilers::CompileError
         },
     };
 
-    compilers::compile(project, compiler_options)?;
-
-    Ok(())
+    match compiler {
+        Compiler::GNU => compile(gcc::GCC, project, compiler_options),
+        Compiler::Clang => compile(clang::Clang, project, compiler_options),
+        _ => unimplemented!(),
+    }
 }
 
 /// A high-level interface for compiler options.
+#[derive(Clone)]
 pub struct CompilerOptions {
     pub release: bool,
     pub verbose: bool,
     pub sources: Vec<String>,
     pub language: Language,
-    pub compiler: Compiler,
+    // pub compiler: Compiler,
 }
 
+#[derive(Clone)]
 pub enum Language {
     C,
     Cpp,
 }
 
-#[derive(Serialize, Deserialize, Copy, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Copy, Clone, Debug)]
 pub enum Compiler {
     GNU,
     Clang,
-    MSVC,
+    // MSVC,
 }
 
 pub fn detect_available_compilers() -> Vec<Compiler> {
     let mut compilers = Vec::<Compiler>::new();
 
-    if utils::shell_command_exists("gcc -v") {
-        compilers.push(Compiler::GNU)
-    }
-    if utils::shell_command_exists("clang -v") {
-        compilers.push(Compiler::Clang)
-    }
+    if gcc::GCC::exists() { compilers.push(Compiler::GNU) }
+    if clang::Clang::exists() { compilers.push(Compiler::Clang) }
 
     compilers
+}
+
+#[derive(Debug)]
+pub enum CompileErrorType {
+    CompilerReturnedNonZero,
+    CouldNotLocateProjectFile,
+    PythonBuildScriptReturnedNonZero,
+    FileTypeOfMainNotRecognized,
+    CouldNotReadUserConfig,
+}
+
+#[derive(Debug)]
+pub struct CompileError {
+    pub error_type: CompileErrorType,
+    pub msg: String,
+}
+
+pub trait CompilerTrait {
+    /// Must return the name of the compiler spelled properly using capitals and
+    /// punctuation, if applicable. Examples: GNU, Clang, MSVC.
+    #[inline]
+    fn display() -> String;
+
+    /// Must execute a command that ensures the compiler is in PATH, is executable,
+    /// and returns zero on execution. This command MUST return zero/true for the compiler
+    /// to be considered "found".
+    #[inline]
+    fn exists() -> bool;
+
+    /// Must generate an entire build command given the information about the project
+    /// and build settings.
+    fn generate_command(project: Project, compiler_options: CompilerOptions) -> String;
+}
+
+pub fn compile<T>(
+    _: T,
+    project: Project,
+    compiler_options: CompilerOptions,
+) -> Result<(), CompileError> where T: CompilerTrait {
+    let command: String = T::generate_command(project.clone(), compiler_options.clone());
+
+    if compiler_options.verbose {
+        eprintln!("{}", command);
+    }
+
+    println!(
+        "   {} {} v{} with {}",
+        Green.paint("Compiling"),
+        project.package.name,
+        project.package.version,
+        T::display(),
+    );
+
+    // Calling the compiler with our command
+    if utils::shell_command(&command, false).expect("Failed to query compiler.").success() == false {
+        return Err(CompileError {
+            error_type: CompileErrorType::CompilerReturnedNonZero,
+            msg: "Compilation terminated due to previous error(s).".to_string(),
+        });
+    }
+
+    if compiler_options.release {
+        println!("    {} release [optimized]", Green.paint("Finished"));
+    } else {
+        println!("    {} debug [unoptimized]", Green.paint("Finished"));
+    }
+    
+    Ok(())
 }
