@@ -63,12 +63,13 @@ pub fn get_files_in_directory(directory: &Path, recursive: bool) -> Vec<PathBuf>
 
     let mut files = Vec::<PathBuf>::new();
 
-    // We will get a list of entires in the directory
-    for entry in fs::read_dir(directory).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
+    // Read every entry in the directory, exporting them to a Vec.
+    fs::read_dir(directory).unwrap().for_each(|entry| {
+        let path = entry.unwrap().path();
         if path.is_dir() {
             files.push(path.clone());
+            /* When we recursively scan, we also include all entries
+            from subdirectories. */
             if recursive {
                 for p in get_files_in_directory(&path, true) {
                     files.push(p);
@@ -77,7 +78,7 @@ pub fn get_files_in_directory(directory: &Path, recursive: bool) -> Vec<PathBuf>
         } else {
             files.push(path);
         }
-    }
+    });
 
     files
 }
