@@ -1,5 +1,5 @@
 use project::Project;
-use super::{Language, CompilerOptions, CompilerTrait};
+use super::{CompilerOptions, CompilerTrait, Language};
 use utils;
 
 pub struct GCC;
@@ -33,18 +33,14 @@ impl CompilerTrait for GCC {
                     format!(" -o ./target/release/{}.exe", project.package.name).as_str(),
                 );
             } else {
-                command.push_str(
-                    format!(" -o ./target/debug/{}.exe", project.package.name).as_str(),
-                );
+                command
+                    .push_str(format!(" -o ./target/debug/{}.exe", project.package.name).as_str());
             }
         } else {
             if compiler_options.release {
-                command.push_str(
-                    format!(" -o ./target/release/{}", project.package.name).as_str(),
-                );
+                command.push_str(format!(" -o ./target/release/{}", project.package.name).as_str());
             } else {
-                command
-                    .push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
+                command.push_str(format!(" -o ./target/debug/{}", project.package.name).as_str());
             }
         }
 

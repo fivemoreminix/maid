@@ -14,10 +14,7 @@ pub fn windows_path(path: &str) -> String {
 }
 
 /// Executes a shell command and waits for it to finish
-pub fn shell_command(
-    command: &str,
-    silent: bool,
-) -> Result<ExitStatus, ::std::io::Error> {
+pub fn shell_command(command: &str, silent: bool) -> Result<ExitStatus, ::std::io::Error> {
     let command = if cfg!(windows) {
         string_to_vec(&windows_path(command))
     } else {
@@ -31,17 +28,9 @@ pub fn shell_command(
             .status
     } else {
         if cfg!(target_os = "windows") {
-            Command::new("cmd")
-                .arg("/C")
-                .args(command)
-                .spawn()?
-                .wait()?
+            Command::new("cmd").arg("/C").args(command).spawn()?.wait()?
         } else {
-            Command::new("sh")
-                .arg("-c")
-                .args(command)
-                .spawn()?
-                .wait()?
+            Command::new("sh").arg("-c").args(command).spawn()?.wait()?
         }
     };
 

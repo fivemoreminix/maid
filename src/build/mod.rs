@@ -12,9 +12,14 @@ use utils;
 use ansi_term::Color::Green;
 
 pub fn build(release: bool, verbose: bool) -> Result<(), CompileError> {
-    let project = match Project::get(Path::new(".")) {
+    let project = match Project::get() {
         Ok(project) => project,
-        Err(e) => return Err(CompileError { error_type: CompileErrorType::CouldNotLocateProjectFile, msg: e.to_string() }),
+        Err(e) => {
+            return Err(CompileError {
+                error_type: CompileErrorType::CouldNotLocateProjectFile,
+                msg: e.description,
+            })
+        }
     };
 
     // If this project has a build.py file but does not specifically have
@@ -25,8 +30,14 @@ pub fn build(release: bool, verbose: bool) -> Result<(), CompileError> {
             eprintln!("Executing build.py...");
         }
 
-        if utils::shell_command("python ./build.py", false).expect("Failed to execute Python.").success() == false {
-            return Err(CompileError { error_type: CompileErrorType::PythonBuildScriptReturnedNonZero, msg: "Python build script returned non zero.".to_string() });
+        if utils::shell_command("python ./build.py", false)
+            .expect("Failed to execute Python.")
+            .success() == false
+        {
+            return Err(CompileError {
+                error_type: CompileErrorType::PythonBuildScriptReturnedNonZero,
+                msg: "Python build script returned non zero.".to_string(),
+            });
         }
     }
 
@@ -74,7 +85,12 @@ pub fn build(release: bool, verbose: bool) -> Result<(), CompileError> {
         "cxx" => language = Language::Cpp,
         "cpp" => language = Language::Cpp,
 
-        _ => return Err(CompileError { error_type: CompileErrorType::FileTypeOfMainNotRecognized, msg: "File extension of 'main' in './source/' does not match C or C++.".to_string() }),
+        _ => {
+            return Err(CompileError {
+                error_type: CompileErrorType::FileTypeOfMainNotRecognized,
+                msg: "File extension of 'main' in './source/' does not match C or C++.".to_string(),
+            })
+        }
     }
 
     let compiler_options = CompilerOptions {
@@ -85,7 +101,7 @@ pub fn build(release: bool, verbose: bool) -> Result<(), CompileError> {
     };
 
     // Set the compiler
-    let compiler = match project.build.clone() {
+    let compiler: Compiler = match project.build.clone() {
         Some(build) => {
             // If the project configuration has a preferred compiler,
             // then forcefully use it. Otherwise, use the preferred
@@ -94,20 +110,29 @@ pub fn build(release: bool, verbose: bool) -> Result<(), CompileError> {
                 Some(compiler) => compiler,
                 None => match Config::get() {
                     Ok(config) => config.preferred_compiler,
-                    Err(e) => return Err(CompileError { error_type: CompileErrorType::CouldNotReadUserConfig, msg: e.to_string() }),
-                }
+                    Err(e) => {
+                        return Err(CompileError {
+                            error_type: CompileErrorType::CouldNotReadUserConfig,
+                            msg: e.to_string(),
+                        })
+                    }
+                },
             }
         }
         None => match Config::get() {
             Ok(config) => config.preferred_compiler,
-            Err(e) => return Err(CompileError { error_type: CompileErrorType::CouldNotReadUserConfig, msg: e.to_string() }),
+            Err(e) => {
+                return Err(CompileError {
+                    error_type: CompileErrorType::CouldNotReadUserConfig,
+                    msg: e.to_string(),
+                })
+            }
         },
     };
 
     match compiler {
         Compiler::GNU => compile(gcc::GCC, project, compiler_options),
         Compiler::Clang => compile(clang::Clang, project, compiler_options),
-        _ => unimplemented!(),
     }
 }
 
@@ -137,8 +162,12 @@ pub enum Compiler {
 pub fn detect_available_compilers() -> Vec<Compiler> {
     let mut compilers = Vec::<Compiler>::new();
 
-    if gcc::GCC::exists() { compilers.push(Compiler::GNU) }
-    if clang::Clang::exists() { compilers.push(Compiler::Clang) }
+    if gcc::GCC::exists() {
+        compilers.push(Compiler::GNU)
+    }
+    if clang::Clang::exists() {
+        compilers.push(Compiler::Clang)
+    }
 
     compilers
 }
@@ -179,7 +208,10 @@ pub fn compile<T>(
     _: T,
     project: Project,
     compiler_options: CompilerOptions,
-) -> Result<(), CompileError> where T: CompilerTrait {
+) -> Result<(), CompileError>
+where
+    T: CompilerTrait,
+{
     let command: String = T::generate_command(project.clone(), compiler_options.clone());
 
     if compiler_options.verbose {
@@ -195,7 +227,10 @@ pub fn compile<T>(
     );
 
     // Calling the compiler with our command
-    if utils::shell_command(&command, false).expect("Failed to query compiler.").success() == false {
+    if utils::shell_command(&command, false)
+        .expect("Failed to query compiler.")
+        .success() == false
+    {
         return Err(CompileError {
             error_type: CompileErrorType::CompilerReturnedNonZero,
             msg: "Compilation terminated due to previous error(s).".to_string(),
@@ -207,6 +242,6 @@ pub fn compile<T>(
     } else {
         println!("    {} debug [unoptimized]", Green.paint("Finished"));
     }
-    
+
     Ok(())
 }

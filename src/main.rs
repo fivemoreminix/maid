@@ -13,7 +13,6 @@ mod user;
 
 use structopt::StructOpt;
 use project::Project;
-use std::path::Path;
 use ansi_term::Color::Green;
 
 #[derive(StructOpt)]
@@ -70,7 +69,7 @@ fn main() {
         Options::Build { verbose, release } => build::build(release, verbose).unwrap(),
         Options::Run { arguments } => {
             // Get the project file
-            let project = Project::get(Path::new(".")).unwrap();
+            let project = Project::get().unwrap();
 
             // Unwrap the program arguments
             let arguments = match arguments {
@@ -105,9 +104,9 @@ fn main() {
                 }
             }
         }
-        Options::Clean => match Project::get(Path::new(".")) {
+        Options::Clean => match project::Project::get() {
             Ok(_) => std::fs::remove_dir_all("./target").unwrap(),
-            Err(_) => panic!("Project folder not within current directory."),
+            Err(e) => panic!("{}", e.description),
         },
     }
 }

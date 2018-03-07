@@ -60,13 +60,21 @@ impl Config {
             Err("No available compilers found. Make sure you have a major C compiler installed and in your PATH variable.")
         } else {
             let default_compiler = if cfg!(target_os = "windows") {
-                if available_compilers.clone().into_iter().any(|compiler| compiler == Compiler::GNU) {
+                if available_compilers
+                    .clone()
+                    .into_iter()
+                    .any(|compiler| compiler == Compiler::GNU)
+                {
                     Compiler::GNU // Default compiler for Windows
                 } else {
                     available_compilers[0]
                 }
             } else {
-                if available_compilers.clone().into_iter().any(|compiler| compiler == Compiler::GNU) {
+                if available_compilers
+                    .clone()
+                    .into_iter()
+                    .any(|compiler| compiler == Compiler::GNU)
+                {
                     Compiler::GNU // Default compiler for *nix
                 } else {
                     available_compilers[0]
