@@ -69,8 +69,8 @@ impl Project {
         // Create the project directory
         let mut dir_builder = DirBuilder::new();
         dir_builder.recursive(true);
-        dir_builder.create(format!("./{}/src", name)).unwrap();
-        dir_builder.create(format!("./{}/inc", name)).unwrap();
+        dir_builder.create(format!("./{}/source", name)).unwrap();
+        dir_builder.create(format!("./{}/include", name)).unwrap();
 
         // Create the template main.c source file
         let mut source_file = File::create(format!("./{}/source/main.c", name)).unwrap();
