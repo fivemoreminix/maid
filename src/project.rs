@@ -38,27 +38,21 @@ pub enum Target {
     Dynamic,
 }
 
-static BAD_CHARS: [char; 22] = [
-    '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '{', '}', '/', '\\', ':', ';', '|',
-    '<', '>', '?',
-];
-
 fn is_valid_project_name(name: &str) -> bool {
-    let mut bad_chars_iter = BAD_CHARS.iter();
-    let mut valid = true;
-    name.chars().for_each(|c| {
-        if bad_chars_iter.any(|bad_c| c == *bad_c) {
-            valid = false;
-        }
-    });
-    valid
+    name.chars().all(|c| match c {
+        'a' ... 'z' |
+        'A' ... 'Z' |
+        '0' ... '9' |
+        '_' | '-' => true,
+        _ => false,
+    })
 }
 
 impl Project {
     /// Creates a new project and returns its properties.
     pub fn new(name: &str) -> Result<Self, ProjectError> {
         if !is_valid_project_name(name) {
-            return Err(ProjectError { error_type: ProjectErrorType::ProjectNameContainsInvalidCharacters, description: format!("Project name may not contain any of the following restricted characters:\n{:?}", BAD_CHARS) });
+            return Err(ProjectError { error_type: ProjectErrorType::ProjectNameContainsInvalidCharacters, description: String::from("Project name must match the regex: (a-zA-Z)+") });
         }
 
         // Check if there is already a folder with the same name as the project
@@ -115,7 +109,6 @@ int main(int argc, char *argv[])
         let toml = ::toml::to_string(&project).unwrap();
 
         project_file.write_all(toml.as_bytes()).unwrap();
-        write!(project_file, "{}", toml).unwrap();
         // Sync IO operations for the new file before continuing
         project_file.sync_all().unwrap();
 
@@ -155,7 +148,7 @@ int main(int argc, char *argv[])
         if is_valid_project_name(&project.package.name) {
             Ok(project)
         } else {
-            Err(ProjectError { error_type: ProjectErrorType::ProjectNameContainsInvalidCharacters, description: format!("Project name may not contain any of the following restricted characters:\n{:?}", BAD_CHARS) })
+            Err(ProjectError { error_type: ProjectErrorType::ProjectNameContainsInvalidCharacters, description: String::from("Project name must match the regex: (a-zA-Z)+") })
         }
     }
 }
@@ -172,4 +165,10 @@ pub enum ProjectErrorType {
 pub struct ProjectError {
     pub error_type: ProjectErrorType,
     pub description: String,
+}
+
+impl ::std::fmt::Display for ProjectError {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "{} ({:?})", self.description, self.error_type)
+    }
 }

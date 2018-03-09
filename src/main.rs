@@ -48,22 +48,23 @@ enum Options {
 fn main() {
     let options = Options::from_args();
 
+    /*
     std::panic::set_hook(Box::new(|panic_info| {
         match panic_info.payload().downcast_ref::<&str>() {
             Some(message) => eprintln!("maid: error: {}", message),
-            None => eprintln!("maid: Error, exiting."),
+            None => eprintln!("maid: Unidentified error, exiting."),
         }
     }));
+    */
 
     // Enable color support
     ansi_term::enable_ansi_support().unwrap();
 
     match options {
         Options::New { name, lib } => {
-            if lib {
-                Project::new(&name).unwrap();
-            } else {
-                Project::new(&name).unwrap();
+            match Project::new(&name) {
+                Err(e) => panic!("{}", e),
+                _ => {}
             }
         }
         Options::Build { verbose, release } => build::build(release, verbose).unwrap(),
